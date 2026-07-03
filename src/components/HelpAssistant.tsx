@@ -8,10 +8,22 @@ const QUICK_TOPICS = [
   { label: "🛒 POS Guide", prompt: "How do I use the POS sales flow and checkout?" },
 ];
 
+const ADMIN_CONTACT_CARD = {
+  title: "🆘 System Admin Contact",
+  subtitle: "For urgent issues, technical problems, or requests outside Mobile Shop OS scope, contact the admin directly:",
+  contacts: [
+    { label: "📱 Telegram", value: "@LordPainReborn", url: "https://t.me/LordPainReborn" },
+    { label: "📞 Phone", value: "+959961089869", url: "tel:+959961089869" },
+    { label: "💬 Viber", value: "+959798293948", url: "viber://chat?number=%2B959798293948" },
+    { label: "🌐 Facebook", value: "Bhone Myat Paing", url: "https://www.facebook.com/BhoneMyatPaing" },
+  ],
+};
+
 type Message = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  adminCard?: boolean;
 };
 
 export default function HelpAssistant() {
@@ -40,11 +52,39 @@ export default function HelpAssistant() {
     scrollToBottom();
   }, [messages, open]);
 
-  const createMessage = (role: Message["role"], text: string): Message => ({
+  const createMessage = (role: Message["role"], text: string, adminCard = false): Message => ({
     id: `${role}-${Date.now()}-${Math.random()}`,
     role,
     text,
+    adminCard,
   });
+
+  const renderMessageContent = (message: Message) => {
+    if (!message.adminCard) {
+      return <span>{message.text}</span>;
+    }
+
+    return (
+      <div className="space-y-3">
+        <p className="font-semibold text-slate-900">{ADMIN_CONTACT_CARD.title}</p>
+        <p className="text-sm text-slate-700">{ADMIN_CONTACT_CARD.subtitle}</p>
+        <div className="space-y-2 rounded-3xl border border-slate-200 bg-white p-3">
+          {ADMIN_CONTACT_CARD.contacts.map((contact) => (
+            <a
+              key={contact.label}
+              href={contact.url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-900 transition hover:bg-slate-100"
+            >
+              <span>{contact.label}</span>
+              <span className="font-medium text-slate-700">{contact.value}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const sendPrompt = async (prompt: string) => {
     const trimmed = prompt.trim();
@@ -81,6 +121,17 @@ export default function HelpAssistant() {
     await sendPrompt(input);
   };
 
+  const showAdminContactCard = () => {
+    setMessages((current) => [
+      ...current,
+      createMessage(
+        "assistant",
+        `${ADMIN_CONTACT_CARD.title}\n\n${ADMIN_CONTACT_CARD.subtitle}`,
+        true
+      ),
+    ]);
+  };
+
   const quickButtons = useMemo(
     () => QUICK_TOPICS.map((topic) => (
       <button
@@ -115,6 +166,17 @@ export default function HelpAssistant() {
 
           <div className="mb-3 flex flex-wrap gap-2 px-1">{quickButtons}</div>
 
+          <div className="mb-3 flex items-center justify-between gap-2 px-1">
+            <button
+              type="button"
+              onClick={showAdminContactCard}
+              className="min-w-0 rounded-2xl bg-amber-500 px-3 py-2 text-xs font-semibold text-slate-950 shadow-sm transition hover:bg-amber-400"
+            >
+              🆘 Contact Admin
+            </button>
+            <p className="text-xs text-slate-500">Need help with a bug or out-of-scope question? Tap to escalate.</p>
+          </div>
+
           <div
             ref={containerRef}
             className="mb-3 max-h-72 space-y-3 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-3"
@@ -131,7 +193,7 @@ export default function HelpAssistant() {
                       : "bg-slate-900 text-white"
                   }`}
                 >
-                  {message.text}
+                  {renderMessageContent(message)}
                 </div>
               </div>
             ))}
