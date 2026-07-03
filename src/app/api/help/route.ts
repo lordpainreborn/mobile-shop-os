@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { prisma } from "@/lib/prisma";
+
+export const maxDuration = 30;
 
 const SYSTEM_PROMPT = `You are the bilingual (English/Burmese) AI Support Assistant for Mobile Shop OS. Answer questions clearly about Products, Repairs, POS, and Login/Accounts.
 
 CRITICAL CONVERSATION RULES:
 - Never re-introduce yourself ('Hello, I am AI...') if the conversation is ongoing. Jump directly into answering the user's prompt.
 - Never truncate your explanation; keep it complete and helpful.
-
-CRITICAL ESCALATION RULE:
-- ONLY IF you do not know the answer, if the query is out of scope, or if the user explicitly needs human help, reply politely explaining that you don't have this info.
-- Then include the exact tag [ESCALATE_ADMIN] in your response along with these contact details:
-  - Telegram: @LordPainReborn (https://t.me/LordPainReborn)
-  - Phone: +959961089869
-  - Viber: +959798293948
-  - Facebook: Bhone Myat Paing
 
 Speak naturally in English or Burmese depending on the user's language. Answer as a helpful Mobile Shop OS support assistant.`;
 
@@ -79,11 +74,12 @@ async function getFallbackResponse(message: string, debugReason?: string) {
 - Repairs page tickets and status updates
 - POS sales checkout workflows
 
-Ask me something like \"How do I add a product?\" or \"How do I open a repair ticket?\``;
+If the AI cannot answer, please contact admin:
+Telegram: @LordPainReborn | Phone: +959961089869`;
   }
 
   if (debugReason && shouldExposeGeminiDebug()) {
-    return `${fallbackText}\n\n[Gemini debug] ${debugReason}`;
+    return `${fallbackText}\n\n[Debug] ${debugReason}`;
   }
 
   return fallbackText;
@@ -92,7 +88,7 @@ Ask me something like \"How do I add a product?\" or \"How do I open a repair ti
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as unknown;
-    const requestMessages: unknown[] = 
+    const requestMessages: unknown[] =
       typeof body === "object" && body !== null && Array.isArray((body as any).messages)
         ? (body as any).messages
         : [];
@@ -125,10 +121,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing prompt." }, { status: 400 });
     }
 
-    const formattedHistory = conversation.map((message) => ({
-      role: message.role === "assistant" ? "model" : message.role,
-      parts: [{ text: message.content }],
-    }));
+    const recentConversation = conversation.slice(-6);
+
+    let liveInventoryContext = "";
+    try {
+      const inventory = await prisma.product.findMany({
+        where: { stockQuantity: { gt: 0 } },
+        select: {
+          name: true,
+          price: true,
+          stockQuantity: true,
+        },
+        take: 20,
+      });
+
+      if (inventory.length > 0) {
+        const inventoryLines = inventory.map(
+          (item) => `- ${item.name}: ${item.stockQuantity} pcs, ${item.price}`
+        );
+        liveInventoryContext = `LIVE SHOP INVENTORY FROM DATABASE: ${inventory.length} items\n${inventoryLines.join("\n")}\nAlways refer strictly to this real-time stock and pricing when staff inquire about product availability.`;
+      }
+    } catch (dbError) {
+      console.error("Live inventory query failed:", dbError);
+      liveInventoryContext = "";
+    }
+
+    const systemInstruction = liveInventoryContext
+      ? `${liveInventoryContext}\n\n${SYSTEM_PROMPT}`
+      : SYSTEM_PROMPT;
+
+    const formattedHistory = [
+      {
+        role: "system",
+        parts: [{ text: systemInstruction }],
+      },
+      ...recentConversation.map((message) => ({
+        role: message.role === "assistant" ? "model" : message.role,
+        parts: [{ text: message.content }],
+      })),
+    ];
 
     const geminiKey = process.env.GEMINI_API_KEY?.trim();
     let answer = "";
@@ -145,7 +176,7 @@ export async function POST(request: Request) {
               model,
               contents: formattedHistory,
               config: {
-                systemInstruction: SYSTEM_PROMPT,
+                systemInstruction,
                 temperature: 0.8,
                 maxOutputTokens: 2048,
               },

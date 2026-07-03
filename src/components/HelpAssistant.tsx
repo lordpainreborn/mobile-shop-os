@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MessageCircle } from "lucide-react";
 
 const QUICK_TOPICS = [
   { label: "Add Product Tutorial", prompt: "How do I add or edit products and manage inventory?" },
@@ -18,17 +19,6 @@ const ADMIN_CONTACT_CARD = {
     { label: "Facebook", value: "Bhone Myat Paing", url: "https://www.facebook.com/BhoneMyatPaing" },
   ],
 };
-
-const ESCALATE_TAG = "[ESCALATE_ADMIN]";
-const ESCALATION_KEYWORDS = [
-  "contact admin",
-  "system admin",
-  "technical bug",
-  "out of scope",
-  "need human help",
-  "cannot help",
-  "don't have this info",
-];
 
 type Message = {
   id: string;
@@ -48,6 +38,7 @@ export default function HelpAssistant() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -64,63 +55,33 @@ export default function HelpAssistant() {
     scrollToBottom();
   }, [messages, open]);
 
-  const createMessage = (role: Message["role"], text: string, adminCard = false): Message => ({
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const timeout = setTimeout(() => setCooldown((current) => current - 1), 1000);
+    return () => clearTimeout(timeout);
+  }, [cooldown]);
+
+  const createMessage = (role: Message["role"], text: string): Message => ({
     id: `${role}-${Date.now()}-${Math.random()}`,
     role,
     text,
-    adminCard,
   });
 
-  const isEscalationResponse = (text: string) => {
-    const normalized = text.toLowerCase();
-    return (
-      normalized.includes(ESCALATE_TAG.toLowerCase()) ||
-      ESCALATION_KEYWORDS.some((keyword) => normalized.includes(keyword))
-    );
-  };
-
-  const cleanEscalationText = (text: string) => text.replace(ESCALATE_TAG, "").trim();
-
   const renderMessageContent = (message: Message) => {
-    const displayText = cleanEscalationText(message.text);
-    return <span>{displayText}</span>;
-  };
-
-  const renderEscalationCard = (message: Message) => {
-    if (message.role !== "assistant") return null;
-    const cleanedText = cleanEscalationText(message.text);
-    if (!isEscalationResponse(message.text)) return null;
-
-    return (
-      <div className="mt-2 rounded-3xl border border-amber-200 bg-amber-50 p-3 text-sm text-slate-900 shadow-sm">
-        <p className="mb-2 font-semibold text-slate-900">Need help from the System Admin?</p>
-        <div className="space-y-2">
-          {ADMIN_CONTACT_CARD.contacts.map((contact) => (
-            <a
-              key={contact.label}
-              href={contact.url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 transition hover:bg-amber-100"
-            >
-              <span>{contact.label}</span>
-              <span className="font-medium text-slate-700">{contact.value}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    );
+    return <span>{message.text}</span>;
   };
 
   const sendPrompt = async (prompt: string) => {
     const trimmed = prompt.trim();
-    if (!trimmed) return;
+    if (!trimmed || cooldown > 0) return;
 
     const userMessage = createMessage("user", trimmed);
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput("");
     setLoading(true);
+    setCooldown(4);
 
     try {
       const response = await fetch("/api/help", {
@@ -195,25 +156,19 @@ export default function HelpAssistant() {
             ref={containerRef}
             className="mb-3 max-h-72 space-y-3 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-3"
           >
-            {messages.map((message) => {
-              const displayText = cleanEscalationText(message.text);
-              return (
-                <div key={message.id} className="space-y-2">
-                  <div className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}>
-                    <div
-                      className={`max-w-[82%] rounded-3xl px-4 py-3 text-sm shadow-sm break-words whitespace-pre-wrap ${
-                        message.role === "assistant"
-                          ? "bg-slate-100 text-slate-800"
-                          : "bg-slate-900 text-white"
-                      }`}
-                    >
-                      <span>{displayText}</span>
-                    </div>
-                  </div>
-                  {renderEscalationCard({ ...message, text: displayText })}
+            {messages.map((message) => (
+              <div key={message.id} className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}>
+                <div
+                  className={`max-w-[82%] rounded-3xl px-4 py-3 text-sm shadow-sm break-words whitespace-pre-wrap ${
+                    message.role === "assistant"
+                      ? "bg-slate-100 text-slate-800"
+                      : "bg-slate-900 text-white"
+                  }`}
+                >
+                  {renderMessageContent(message)}
                 </div>
-              );
-            })}
+              </div>
+            ))}
             {loading && (
               <div className="flex items-center gap-2 text-slate-500">
                 <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-slate-500" />
@@ -227,14 +182,15 @@ export default function HelpAssistant() {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               placeholder="Ask how to use a feature..."
-              className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              disabled={loading || cooldown > 0}
+              className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             />
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || cooldown > 0}
               className="rounded-2xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
             >
-              Send
+              {cooldown > 0 ? `ခဏစောင့်ပါ (${cooldown}s)` : "Send"}
             </button>
           </form>
         </div>
@@ -279,7 +235,7 @@ export default function HelpAssistant() {
             className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
             aria-label="Open AI help assistant"
           >
-            <span className="text-sm font-extrabold tracking-tight">AI</span>
+            <MessageCircle className="w-6 h-6" />
           </button>
         </div>
       </div>
