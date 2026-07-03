@@ -5,7 +5,8 @@ const SYSTEM_PROMPT = `You are the friendly, intelligent AI Support Assistant em
 - Products Page: Add, edit, delete items, and check inventory.
 - Repairs Page: Create repair tickets, track device repair status, update costs.
 - POS Page: Add products to cart, checkout, and generate sales invoices.
-If users ask general conversation or technical troubleshooting questions, answer them smartly and naturally like real Gemini/ChatGPT.`;
+If users ask general conversation or technical troubleshooting questions, answer them smartly and naturally like real Gemini/ChatGPT.
+If this is a continuation or follow-up question, jump straight into the helpful answer immediately without re-introducing yourself. Do not repeat the greeting or say "Hello, I am Mobile Shop OS Assistant" again.`;
 
 const fallbackResponses: Record<string, string> = {
   addProduct: `📦 Products Page Tutorial:
@@ -56,9 +57,15 @@ Ask me something like \"How do I add a product?\" or \"How do I open a repair ti
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const messages = Array.isArray(body.messages) ? body.messages : [];
     const prompt = String(body.prompt || "").trim();
 
-    if (!prompt) {
+    const fullMessages = messages.length > 0 ? messages : prompt ? [{ role: "user", content: prompt }] : [];
+    const lastMessage = fullMessages[fullMessages.length - 1];
+    const currentUserMessage = lastMessage?.role === "user" ? String(lastMessage.content || "").trim() : prompt;
+    const historyMessages = lastMessage?.role === "user" ? fullMessages.slice(0, -1) : fullMessages;
+
+    if (!currentUserMessage) {
       return NextResponse.json({ error: "Missing prompt." }, { status: 400 });
     }
 
@@ -68,22 +75,32 @@ export async function POST(request: Request) {
     if (geminiKey) {
       try {
         const client = new GoogleGenAI({ apiKey: geminiKey });
-        const response = await client.models.generateContent({
+        const chat = client.chats.create({
           model: "gemini-2.5-flash",
-          contents: `${SYSTEM_PROMPT}\n\nUser: ${prompt}`,
           config: {
             temperature: 0.8,
-            maxOutputTokens: 450,
+            maxOutputTokens: 2048,
           },
+          history: [
+            {
+              role: "system",
+              parts: [{ text: SYSTEM_PROMPT }],
+            },
+            ...historyMessages.map((message: any) => ({
+              role: message.role === "assistant" ? "model" : message.role === "user" ? "user" : String(message.role),
+              parts: [{ text: String(message.content ?? message.text ?? "") }],
+            })),
+          ],
         });
 
+        const response = await chat.sendMessage({ message: currentUserMessage });
         answer = response.text?.trim() || "";
       } catch (geminiError) {
         console.error("Gemini API error:", geminiError);
-        answer = await getFallbackResponse(prompt);
+        answer = await getFallbackResponse(currentUserMessage);
       }
     } else {
-      answer = await getFallbackResponse(prompt);
+      answer = await getFallbackResponse(currentUserMessage);
     }
 
     return NextResponse.json({ answer });

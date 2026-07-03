@@ -51,7 +51,8 @@ export default function HelpAssistant() {
     if (!trimmed) return;
 
     const userMessage = createMessage("user", trimmed);
-    setMessages((current) => [...current, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
     setLoading(true);
 
@@ -59,7 +60,9 @@ export default function HelpAssistant() {
       const response = await fetch("/api/help", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: trimmed }),
+        body: JSON.stringify({
+          messages: updatedMessages.map(({ role, text }) => ({ role, content: text })),
+        }),
       });
 
       const data = await response.json();
@@ -122,17 +125,13 @@ export default function HelpAssistant() {
                 className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}
               >
                 <div
-                  className={`max-w-[82%] rounded-3xl px-4 py-3 text-sm shadow-sm ${
+                  className={`max-w-[82%] rounded-3xl px-4 py-3 text-sm shadow-sm break-words whitespace-pre-wrap ${
                     message.role === "assistant"
                       ? "bg-slate-100 text-slate-800"
                       : "bg-slate-900 text-white"
                   }`}
                 >
-                  {message.text.split("\n").map((line, index) => (
-                    <p key={`line-${index}`} className="leading-6">
-                      {line}
-                    </p>
-                  ))}
+                  {message.text}
                 </div>
               </div>
             ))}
