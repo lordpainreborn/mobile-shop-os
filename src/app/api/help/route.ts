@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
-const SYSTEM_PROMPT = `You are the friendly, intelligent AI Support Assistant embedded inside 'Mobile Shop OS'. Speak fluently in both Burmese and English based on the user's language. Guide staff on how to use our system:
-- Products Page: Add, edit, delete items, and check inventory.
-- Repairs Page: Create repair tickets, track device repair status, update costs.
-- POS Page: Add products to cart, checkout, and generate sales invoices.
-If users ask general conversation or technical troubleshooting questions, answer them smartly and naturally like real Gemini/ChatGPT.
-If this is a continuation or follow-up question, jump straight into the helpful answer immediately without re-introducing yourself. Do not repeat the greeting or say "Hello, I am Mobile Shop OS Assistant" again.`;
+const SYSTEM_PROMPT = `You are the intelligent, bilingual (English & Burmese) Support Assistant embedded inside 'Mobile Shop OS'.
+
+CRITICAL CONVERSATION RULES:
+- Never re-introduce yourself ('Hello, I am AI...') if the conversation is ongoing. Jump directly into answering the user's prompt.
+- Never truncate your explanation; keep it complete and helpful.
+
+SYSTEM KNOWLEDGE BASE:
+- Account & Login: Currently, the system is designed for direct staff access. Tell users how authentication and session behavior work in our app clearly, and guide them gracefully if they ask about logging in or switching accounts.
+- Products Page: Managing phone inventory, accessories, and stock levels.
+- Repairs Page: Opening repair tickets, tracking device issues, and status updates.
+- POS / Sales: Adding items to cart, checkout, and receipt generation.
+
+Speak naturally in English or Burmese depending on the user's language. Answer as a helpful Mobile Shop OS support assistant.`;
 
 const fallbackResponses: Record<string, string> = {
   addProduct: `📦 Products Page Tutorial:
@@ -57,17 +64,46 @@ Ask me something like \"How do I add a product?\" or \"How do I open a repair ti
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const requestMessages: unknown[] = Array.isArray(body.messages) ? body.messages : [];
     const prompt = String(body.prompt || "").trim();
 
-    const fullMessages = messages.length > 0 ? messages : prompt ? [{ role: "user", content: prompt }] : [];
-    const lastMessage = fullMessages[fullMessages.length - 1];
-    const currentUserMessage = lastMessage?.role === "user" ? String(lastMessage.content || "").trim() : prompt;
-    const historyMessages = lastMessage?.role === "user" ? fullMessages.slice(0, -1) : fullMessages;
+    type ConversationMessage = {
+      role: "user" | "assistant";
+      content: string;
+    };
 
-    if (!currentUserMessage) {
+    const normalizedMessages: ConversationMessage[] = requestMessages
+      .filter(
+        (item: unknown): item is { role: string; content?: string; text?: string } =>
+          typeof item === "object" &&
+          item !== null &&
+          "role" in item &&
+          typeof (item as any).role === "string" &&
+          ((item as any).role === "user" || (item as any).role === "assistant") &&
+          (typeof (item as any).content === "string" || typeof (item as any).text === "string")
+      )
+      .map((item) => ({
+        role: (item.role as "user" | "assistant"),
+        content: String(item.content ?? item.text ?? "").trim(),
+      }))
+      .filter((message) => message.content.length > 0);
+
+    const conversation: ConversationMessage[] = normalizedMessages.length > 0 ? normalizedMessages : prompt ? [{ role: "user", content: prompt }] : [];
+
+    if (conversation.length === 0) {
       return NextResponse.json({ error: "Missing prompt." }, { status: 400 });
     }
+
+    const formattedHistory = [
+      {
+        role: "system",
+        parts: [{ text: SYSTEM_PROMPT }],
+      },
+      ...conversation.map((message) => ({
+        role: message.role === "assistant" ? "model" : message.role,
+        parts: [{ text: message.content }],
+      })),
+    ];
 
     const geminiKey = process.env.GEMINI_API_KEY;
     let answer = "";
@@ -75,32 +111,22 @@ export async function POST(request: Request) {
     if (geminiKey) {
       try {
         const client = new GoogleGenAI({ apiKey: geminiKey });
-        const chat = client.chats.create({
+        const response = await client.models.generateContent({
           model: "gemini-2.5-flash",
+          contents: formattedHistory,
           config: {
             temperature: 0.8,
             maxOutputTokens: 2048,
           },
-          history: [
-            {
-              role: "system",
-              parts: [{ text: SYSTEM_PROMPT }],
-            },
-            ...historyMessages.map((message: any) => ({
-              role: message.role === "assistant" ? "model" : message.role === "user" ? "user" : String(message.role),
-              parts: [{ text: String(message.content ?? message.text ?? "") }],
-            })),
-          ],
         });
 
-        const response = await chat.sendMessage({ message: currentUserMessage });
         answer = response.text?.trim() || "";
       } catch (geminiError) {
         console.error("Gemini API error:", geminiError);
-        answer = await getFallbackResponse(currentUserMessage);
+        answer = await getFallbackResponse(conversation[conversation.length - 1].content);
       }
     } else {
-      answer = await getFallbackResponse(currentUserMessage);
+      answer = await getFallbackResponse(conversation[conversation.length - 1].content);
     }
 
     return NextResponse.json({ answer });
