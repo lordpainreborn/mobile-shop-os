@@ -48,19 +48,51 @@ const queryMap: { keywords: string[]; key: keyof typeof fallbackResponses }[] = 
   { keywords: ["pos", "sales", "checkout", "cart", "transaction"], key: "posGuide" },
 ];
 
-async function getFallbackResponse(message: string) {
+function getGeminiErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown Gemini API error";
+  }
+}
+
+function shouldExposeGeminiDebug() {
+  return process.env.NODE_ENV !== "production" || process.env.GEMINI_DEBUG_ERRORS === "true";
+}
+
+async function getFallbackResponse(message: string, debugReason?: string) {
   const normalized = message.trim().toLowerCase();
+  let fallbackText = "";
+
   for (const { keywords, key } of queryMap) {
     if (keywords.some((word) => normalized.includes(word))) {
-      return fallbackResponses[key];
+      fallbackText = fallbackResponses[key];
+      break;
     }
   }
-  return `Hello! I am your Mobile Shop OS assistant. I can help with:
+
+  if (!fallbackText) {
+    fallbackText = `Hello! I am your Mobile Shop OS assistant. I can help with:
 - Products page guidance
 - Repairs page tickets and status updates
 - POS sales checkout workflows
 
 Ask me something like \"How do I add a product?\" or \"How do I open a repair ticket?\``;
+  }
+
+  if (debugReason && shouldExposeGeminiDebug()) {
+    return `${fallbackText}\n\n[Gemini debug] ${debugReason}`;
+  }
+
+  return fallbackText;
 }
 
 export async function POST(request: Request) {
@@ -99,43 +131,63 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing prompt." }, { status: 400 });
     }
 
-    const formattedHistory = [
-      {
-        role: "system",
-        parts: [{ text: SYSTEM_PROMPT }],
-      },
-      ...conversation.map((message) => ({
-        role: message.role === "assistant" ? "model" : message.role,
-        parts: [{ text: message.content }],
-      })),
-    ];
+    const formattedHistory = conversation.map((message) => ({
+      role: message.role === "assistant" ? "model" : message.role,
+      parts: [{ text: message.content }],
+    }));
 
-    const geminiKey = process.env.GEMINI_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY?.trim();
     let answer = "";
 
     if (geminiKey) {
       try {
         const client = new GoogleGenAI({ apiKey: geminiKey });
-        const response = await client.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: formattedHistory,
-          config: {
-            temperature: 0.8,
-            maxOutputTokens: 2048,
-          },
-        });
+        const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
+        let lastGeminiError: unknown;
 
-        answer = response.text?.trim() ?? "";
-      } catch (geminiError) {
-        console.error("Gemini API error:", geminiError);
-        answer = await getFallbackResponse(conversation[conversation.length - 1].content);
+        for (const model of models) {
+          try {
+            const response = await client.models.generateContent({
+              model,
+              contents: formattedHistory,
+              config: {
+                systemInstruction: SYSTEM_PROMPT,
+                temperature: 0.8,
+                maxOutputTokens: 2048,
+              },
+            });
+
+            answer = response.text?.trim() ?? "";
+            break;
+          } catch (error) {
+            lastGeminiError = error;
+            console.error("Gemini API Error:", error);
+          }
+        }
+
+        if (!answer) {
+          answer = await getFallbackResponse(
+            conversation[conversation.length - 1].content,
+            getGeminiErrorMessage(lastGeminiError)
+          );
+        }
+      } catch (error) {
+        console.error("Gemini API Error:", error);
+        answer = await getFallbackResponse(
+          conversation[conversation.length - 1].content,
+          getGeminiErrorMessage(error)
+        );
       }
     } else {
-      answer = await getFallbackResponse(conversation[conversation.length - 1].content);
+      answer = await getFallbackResponse(
+        conversation[conversation.length - 1].content,
+        "Missing GEMINI_API_KEY"
+      );
     }
 
     return NextResponse.json({ answer });
   } catch (error) {
+    console.error("Help API Error:", error);
     return NextResponse.json({ error: "Unable to process request." }, { status: 500 });
   }
 }
