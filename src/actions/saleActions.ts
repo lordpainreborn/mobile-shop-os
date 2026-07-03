@@ -23,6 +23,9 @@ export type CreateSaleInput = {
 
 type SaleWithItems = Prisma.SaleGetPayload<{ include: { items: true } }>;
 
+const DISCOUNT_RATE = 0.02;
+const TAX_RATE = 0.05;
+
 export async function createSale(
   data: CreateSaleInput
 ): Promise<ActionResponse<SaleWithItems>> {
@@ -63,7 +66,10 @@ export async function createSale(
       return { success: false, error: 'Sale items are required' };
     }
 
-    const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const discount = subtotal * DISCOUNT_RATE;
+    const tax = (subtotal - discount) * TAX_RATE;
+    const totalAmount = subtotal - discount + tax;
 
     const sale = await prisma.$transaction(async (tx) => {
       const products = await tx.product.findMany({

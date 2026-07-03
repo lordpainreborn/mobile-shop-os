@@ -16,9 +16,12 @@ import {
   ScanBarcode,
   Package,
   Loader2,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { getProducts } from '@/actions/productActions';
+import { createSale } from '@/actions/saleActions';
 
 type Category = 'ALL' | 'PHONE' | 'ACCESSORY' | 'PART';
 type PaymentMethod = 'CASH' | 'KBZPAY' | 'CBPAY';
@@ -36,14 +39,6 @@ interface CartItem extends Product {
   quantity: number;
 }
 
-const FALLBACK_PRODUCTS: Product[] = [
-  { id: '1', name: 'iPhone 15 Pro Max (256GB)', sku: 'IP15PM-256', category: 'PHONE', price: 4500000, stock: 5 },
-  { id: '2', name: 'Samsung Galaxy S24 Ultra', sku: 'S24U-512', category: 'PHONE', price: 4200000, stock: 3 },
-  { id: '3', name: 'Anker 20W Fast Charger', sku: 'ACC-ANK-20W', category: 'ACCESSORY', price: 45000, stock: 24 },
-  { id: '4', name: 'AirPods Pro (2nd Gen)', sku: 'APP-2G', category: 'ACCESSORY', price: 650000, stock: 8 },
-  { id: '5', name: 'iPhone 11 Display / Screen', sku: 'PRT-IP11-SCR', category: 'PART', price: 85000, stock: 2 },
-];
-
 const TAX_RATE = 0.05;
 const DISCOUNT_RATE = 0.02;
 
@@ -53,6 +48,8 @@ export default function SalesPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>('ALL');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const texts = {
     title: language === 'en' ? 'Point of Sale' : 'အရောင်းစနစ် (POS)',
@@ -90,26 +87,34 @@ export default function SalesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  useEffect(() => {
-    async function loadProducts() {
+  async function loadProducts(showLoading = true) {
+    if (showLoading) {
       setLoadingProducts(true);
-      const result = await getProducts();
-      if (result.success && result.data && result.data.length > 0) {
-        setProducts(
-          result.data.map((p) => ({
-            id: p.id,
-            name: p.name,
-            sku: p.sku ?? '',
-            category: p.category,
-            price: p.price,
-            stock: p.stockQuantity,
-          }))
-        );
-      } else {
-        setProducts(FALLBACK_PRODUCTS);
-      }
-      setLoadingProducts(false);
     }
+
+    const result = await getProducts();
+    if (result.success && result.data) {
+      setProducts(
+        result.data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          sku: p.sku ?? '',
+          category: p.category,
+          price: p.price,
+          stock: p.stockQuantity,
+        }))
+      );
+    } else {
+      setProducts([]);
+      setNotice({
+        type: 'error',
+        text: result.error ?? 'Unable to load products from inventory.',
+      });
+    }
+    setLoadingProducts(false);
+  }
+
+  useEffect(() => {
     loadProducts();
   }, []);
 
@@ -166,10 +171,33 @@ export default function SalesPage() {
 
   const clearCart = () => setCart([]);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
-    alert(texts.checkoutSuccess);
-    clearCart();
+    setCheckoutLoading(true);
+    setNotice(null);
+
+    const response = await createSale({
+      paymentMethod,
+      items: cart.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      })),
+    });
+
+    setCheckoutLoading(false);
+    if (response.success) {
+      clearCart();
+      setNotice({ type: 'success', text: texts.checkoutSuccess });
+      await loadProducts(false);
+      return;
+    }
+
+    setNotice({
+      type: 'error',
+      text: response.error ?? 'Checkout failed. Please try again.',
+    });
+    await loadProducts(false);
   };
 
   const getCategoryIcon = (category: Category | Product['category']) => {
@@ -208,6 +236,19 @@ export default function SalesPage() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{texts.title}</h1>
         <p className="text-slate-500 text-sm mt-1">{texts.subtitle}</p>
       </div>
+
+      {notice && (
+        <div
+          className={`mb-4 flex shrink-0 items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium ${
+            notice.type === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              : 'border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
+          {notice.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+          <span>{notice.text}</span>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
         <div className="lg:w-[65%] flex flex-col min-h-0 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -428,10 +469,10 @@ export default function SalesPage() {
 
             <button
               onClick={handleCheckout}
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || checkoutLoading}
               className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-extrabold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-900/40 hover:shadow-blue-800/50 cursor-pointer"
             >
-              <Printer size={20} />
+              {checkoutLoading ? <Loader2 size={20} className="animate-spin" /> : <Printer size={20} />}
               {texts.checkout}
             </button>
           </div>

@@ -3,19 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 
 const QUICK_TOPICS = [
-  { label: "📦 Add Product Tutorial", prompt: "How do I add or edit products and manage inventory?" },
-  { label: "🛠️ Open Repair Ticket", prompt: "How do I open a repair ticket and update device status?" },
-  { label: "🛒 POS Guide", prompt: "How do I use the POS sales flow and checkout?" },
+  { label: "Add Product Tutorial", prompt: "How do I add or edit products and manage inventory?" },
+  { label: "Open Repair Ticket", prompt: "How do I open a repair ticket and update device status?" },
+  { label: "POS Guide", prompt: "How do I use the POS sales flow and checkout?" },
 ];
 
 const ADMIN_CONTACT_CARD = {
-  title: "🆘 System Admin Contact",
+  title: "System Admin Contact",
   subtitle: "For urgent issues, technical problems, or requests outside Mobile Shop OS scope, contact the admin directly:",
   contacts: [
-    { label: "📱 Telegram", value: "@LordPainReborn", url: "https://t.me/LordPainReborn" },
-    { label: "📞 Phone", value: "+959961089869", url: "tel:+959961089869" },
-    { label: "💬 Viber", value: "+959798293948", url: "viber://chat?number=%2B959798293948" },
-    { label: "🌐 Facebook", value: "Bhone Myat Paing", url: "https://www.facebook.com/BhoneMyatPaing" },
+    { label: "Telegram", value: "@LordPainReborn", url: "https://t.me/LordPainReborn" },
+    { label: "Phone", value: "+959961089869", url: "tel:+959961089869" },
+    { label: "Viber", value: "+959798293948", url: "viber://chat?number=%2B959798293948" },
+    { label: "Facebook", value: "Bhone Myat Paing", url: "https://www.facebook.com/BhoneMyatPaing" },
   ],
 };
 
@@ -175,9 +175,7 @@ export default function HelpAssistant() {
               type="button"
               onClick={() => setOpen(false)}
               className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-sm text-slate-600 transition hover:bg-slate-100"
-            >
-              ✕
-            </button>
+            >Close</button>
           </div>
 
           <div className="mb-3 flex flex-wrap gap-2 px-1">{quickButtons}</div>
@@ -188,7 +186,7 @@ export default function HelpAssistant() {
               onClick={showAdminContactCard}
               className="min-w-0 rounded-2xl bg-amber-500 px-3 py-2 text-xs font-semibold text-slate-950 shadow-sm transition hover:bg-amber-400"
             >
-              🆘 Contact Admin
+              Contact Admin
             </button>
             <p className="text-xs text-slate-500">Need help with a bug or out-of-scope question? Tap to escalate.</p>
           </div>
@@ -246,7 +244,7 @@ export default function HelpAssistant() {
         {adminPanelOpen && (
           <div className="w-[320px] max-w-[90vw] rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-2xl backdrop-blur-xl">
             <div className="mb-3">
-              <p className="text-sm font-semibold text-slate-900">🆘 Contact Admin</p>
+              <p className="text-sm font-semibold text-slate-900">Contact Admin</p>
               <p className="text-xs text-slate-600">Need urgent help? Use any of the links below.</p>
             </div>
             <div className="space-y-2">
@@ -272,7 +270,7 @@ export default function HelpAssistant() {
             onClick={showAdminContactCard}
             className="inline-flex items-center justify-center rounded-full border border-amber-200 bg-amber-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-2xl transition hover:bg-amber-400"
           >
-            📞 Contact Admin
+            Contact Admin
           </button>
 
           <button
@@ -281,7 +279,7 @@ export default function HelpAssistant() {
             className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
             aria-label="Open AI help assistant"
           >
-            <span className="text-2xl">💬</span>
+            <span className="text-sm font-extrabold tracking-tight">AI</span>
           </button>
         </div>
       </div>

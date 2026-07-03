@@ -18,28 +18,22 @@ CRITICAL ESCALATION RULE:
 Speak naturally in English or Burmese depending on the user's language. Answer as a helpful Mobile Shop OS support assistant.`;
 
 const fallbackResponses: Record<string, string> = {
-  addProduct: `📦 Products Page Tutorial:
+  addProduct: `Products Page Tutorial:
 1. Go to Products.
-2. Click \"Add Product\".
-3. Fill in name, category, cost, price, and stock.
+2. Click "Add Product".
+3. Fill in product name, category, cost, selling price, and stock quantity.
 4. Save to add it to inventory.
-5. Use edit icons to update details or delete to remove items.
-
-မြန်မာဘာသာ: မည်သည့်ထုတ်ကုန်ကိုမဆို \"Products\" စာမျက်နှာတွင် \"Add Product\" ကိုနှိပ်ပြီး အမည်၊ အမျိုးအစား၊ ဝယ်ဈေး၊ ရောင်းဈေးနှင့် စတော့အရေအတွက်ကိုထည့်ပါ။ ပြီးချိန်တွင် သိမ်းဆည်းလိုက်ပါ။`,
-  repairTicket: `🛠️ Repairs Page Guide:
+5. Use the edit and delete buttons to maintain product records.`,
+  repairTicket: `Repairs Page Guide:
 1. Open Repairs.
-2. Click \"New Ticket\" or \"Open Repair\".
-3. Enter device model, issue, customer name, and estimate cost.
-4. Save the ticket and use the status selector to update progress.
-
-မြန်မာဘာသာ: \"Repairs\" စာမျက်နှာတွင် \"New Ticket\" ကိုနှိပ်ပြီး ကိရိယာအမျိုးအစား၊ ပြဿနာ၊ ဖောက်သည်အမည်နှင့် ခန့်မှန်းစရိတ်ကိုထည့်ပါ။ သိမ်းပြီးနောက် အခြေအနေကို အဆင့်မြှင့်နိုင်သည်။`,
-  posGuide: `🛒 POS / Sales Guide:
+2. Click "New Ticket".
+3. Enter customer details, device model, issue, and estimate cost.
+4. Save the ticket and advance the status as work progresses.`,
+  posGuide: `POS / Sales Guide:
 1. Open Sales.
-2. Add products into the cart.
-3. Adjust quantity and verify totals.
-4. Complete checkout and record the transaction.
-
-မြန်မာဘာသာ: \"Sales\" စာမျက်နှာတွင် ကုန်ပစ္စည်းများကို ကတ်ထဲထည့်ပါ၊ အရေအတွက်ကိုပြင်ဆင်ပါ၊ ငွေပေးချေမှုကိုပြီးမြောက်ပါက သွင်းသတ်သက်ပါ။`,
+2. Search or scan a product.
+3. Add products to the cart and confirm quantities.
+4. Choose a payment method, then checkout to record the sale and update stock.`,
 };
 
 const queryMap: { keywords: string[]; key: keyof typeof fallbackResponses }[] = [
