@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  TECHNICIAN
+  CASHIER
+}
+
+enum ProductCategory {
+  PHONE
+  ACCESSORY
+  PART
+}
+
+enum RepairStatus {
+  PENDING
+  CHECKING
+  REPAIRING
+  READY
+  DELIVERED
+}
+
+enum ImeiStatus {
+  AVAILABLE
+  SOLD
+  RESERVED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  role          UserRole       @default(CASHIER)
+  password      String
+  createdAt     DateTime       @default(now())
+  repairTickets RepairTicket[]
+}
+
+model Product {
+  id            String          @id @default(cuid())
+  name          String
+  sku           String?         @unique
+  category      ProductCategory
+  price         Float
+  cost          Float
+  stockQuantity Int             @default(0)
+  createdAt     DateTime        @default(now())
+  
+  imeis         IMEI[]
+  saleItems     SaleItem[]
+  repairParts   RepairPart[]
+}
+
+model IMEI {
+  id        String     @id @default(cuid())
+  imeiCode  String     @unique
+  status    ImeiStatus @default(AVAILABLE)
+  productId String
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model RepairTicket {
+  id               String       @id @default(cuid())
+  customerName     String
+  customerPhone    String
+  deviceModel      String
+  issueDescription String
+  status           RepairStatus @default(PENDING)
+  estimateCost     Float?
+  
+  technicianId     String?
+  technician       User?        @relation(fields: [technicianId], references: [id])
+  
+  usedParts        RepairPart[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model RepairPart {
+  id             String       @id @default(cuid())
+  repairTicketId String
+  repairTicket   RepairTicket @relation(fields: [repairTicketId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id])
+  quantity       Int          @default(1)
+}
+
+model Sale {
+  id            String     @id @default(cuid())
+  totalAmount   Float
+  paymentMethod String
+  items         SaleItem[]
+  createdAt     DateTime   @default(now())
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+}
