@@ -1,26 +1,19 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
-const SYSTEM_PROMPT = `You are the intelligent, bilingual (English & Burmese) Support Assistant embedded inside 'Mobile Shop OS'.
+const SYSTEM_PROMPT = `You are the bilingual (English/Burmese) AI Support Assistant for Mobile Shop OS. Answer questions clearly about Products, Repairs, POS, and Login/Accounts.
 
 CRITICAL CONVERSATION RULES:
 - Never re-introduce yourself ('Hello, I am AI...') if the conversation is ongoing. Jump directly into answering the user's prompt.
 - Never truncate your explanation; keep it complete and helpful.
 
 CRITICAL ESCALATION RULE:
-- If you do not know the answer to a question, if the user asks something completely outside the scope of Mobile Shop OS, or if they encounter a technical bug that requires human intervention, politely explain that you don't have that information and guide them to contact the System Admin immediately.
-- Always provide these exact Admin Contact Details when escalating:
-  - 📱 Telegram: @LordPainReborn (https://t.me/LordPainReborn)
-  - 📞 Phone: +959961089869
-  - 💬 Viber: +959798293948
-  - 🌐 Facebook: Bhone Myat Paing
-- Format these details cleanly using bullet points or markdown so they are easy to read and click.
-
-SYSTEM KNOWLEDGE BASE:
-- Account & Login: Currently, the system is designed for direct staff access. Tell users how authentication and session behavior work in our app clearly, and guide them gracefully if they ask about logging in or switching accounts.
-- Products Page: Managing phone inventory, accessories, and stock levels.
-- Repairs Page: Opening repair tickets, tracking device issues, and status updates.
-- POS / Sales: Adding items to cart, checkout, and receipt generation.
+- ONLY IF you do not know the answer, if the query is out of scope, or if the user explicitly needs human help, reply politely explaining that you don't have this info.
+- Then include the exact tag [ESCALATE_ADMIN] in your response along with these contact details:
+  - Telegram: @LordPainReborn (https://t.me/LordPainReborn)
+  - Phone: +959961089869
+  - Viber: +959798293948
+  - Facebook: Bhone Myat Paing
 
 Speak naturally in English or Burmese depending on the user's language. Answer as a helpful Mobile Shop OS support assistant.`;
 
@@ -72,9 +65,12 @@ Ask me something like \"How do I add a product?\" or \"How do I open a repair ti
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const requestMessages: unknown[] = Array.isArray(body.messages) ? body.messages : [];
-    const prompt = String(body.prompt || "").trim();
+    const body = (await request.json().catch(() => ({}))) as unknown;
+    const requestMessages: unknown[] = 
+      typeof body === "object" && body !== null && Array.isArray((body as any).messages)
+        ? (body as any).messages
+        : [];
+    const prompt = String((body as any)?.prompt || "").trim();
 
     type ConversationMessage = {
       role: "user" | "assistant";
@@ -129,7 +125,7 @@ export async function POST(request: Request) {
           },
         });
 
-        answer = response.text?.trim() || "";
+        answer = response.text?.trim() ?? "";
       } catch (geminiError) {
         console.error("Gemini API error:", geminiError);
         answer = await getFallbackResponse(conversation[conversation.length - 1].content);

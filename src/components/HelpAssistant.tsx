@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const QUICK_TOPICS = [
   { label: "📦 Add Product Tutorial", prompt: "How do I add or edit products and manage inventory?" },
@@ -18,6 +18,17 @@ const ADMIN_CONTACT_CARD = {
     { label: "🌐 Facebook", value: "Bhone Myat Paing", url: "https://www.facebook.com/BhoneMyatPaing" },
   ],
 };
+
+const ESCALATE_TAG = "[ESCALATE_ADMIN]";
+const ESCALATION_KEYWORDS = [
+  "contact admin",
+  "system admin",
+  "technical bug",
+  "out of scope",
+  "need human help",
+  "cannot help",
+  "don't have this info",
+];
 
 type Message = {
   id: string;
@@ -37,6 +48,7 @@ export default function HelpAssistant() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const lastMessage = messages[messages.length - 1];
@@ -59,23 +71,37 @@ export default function HelpAssistant() {
     adminCard,
   });
 
+  const isEscalationResponse = (text: string) => {
+    const normalized = text.toLowerCase();
+    return (
+      normalized.includes(ESCALATE_TAG.toLowerCase()) ||
+      ESCALATION_KEYWORDS.some((keyword) => normalized.includes(keyword))
+    );
+  };
+
+  const cleanEscalationText = (text: string) => text.replace(ESCALATE_TAG, "").trim();
+
   const renderMessageContent = (message: Message) => {
-    if (!message.adminCard) {
-      return <span>{message.text}</span>;
-    }
+    const displayText = cleanEscalationText(message.text);
+    return <span>{displayText}</span>;
+  };
+
+  const renderEscalationCard = (message: Message) => {
+    if (message.role !== "assistant") return null;
+    const cleanedText = cleanEscalationText(message.text);
+    if (!isEscalationResponse(message.text)) return null;
 
     return (
-      <div className="space-y-3">
-        <p className="font-semibold text-slate-900">{ADMIN_CONTACT_CARD.title}</p>
-        <p className="text-sm text-slate-700">{ADMIN_CONTACT_CARD.subtitle}</p>
-        <div className="space-y-2 rounded-3xl border border-slate-200 bg-white p-3">
+      <div className="mt-2 rounded-3xl border border-amber-200 bg-amber-50 p-3 text-sm text-slate-900 shadow-sm">
+        <p className="mb-2 font-semibold text-slate-900">Need help from the System Admin?</p>
+        <div className="space-y-2">
           {ADMIN_CONTACT_CARD.contacts.map((contact) => (
             <a
               key={contact.label}
               href={contact.url}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-900 transition hover:bg-slate-100"
+              className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 transition hover:bg-amber-100"
             >
               <span>{contact.label}</span>
               <span className="font-medium text-slate-700">{contact.value}</span>
@@ -122,29 +148,19 @@ export default function HelpAssistant() {
   };
 
   const showAdminContactCard = () => {
-    setMessages((current) => [
-      ...current,
-      createMessage(
-        "assistant",
-        `${ADMIN_CONTACT_CARD.title}\n\n${ADMIN_CONTACT_CARD.subtitle}`,
-        true
-      ),
-    ]);
+    setAdminPanelOpen((current) => !current);
   };
 
-  const quickButtons = useMemo(
-    () => QUICK_TOPICS.map((topic) => (
-      <button
-        key={topic.label}
-        type="button"
-        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-        onClick={() => sendPrompt(topic.prompt)}
-      >
-        {topic.label}
-      </button>
-    )),
-    []
-  );
+  const quickButtons = QUICK_TOPICS.map((topic) => (
+    <button
+      key={topic.label}
+      type="button"
+      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+      onClick={() => sendPrompt(topic.prompt)}
+    >
+      {topic.label}
+    </button>
+  ));
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -181,22 +197,25 @@ export default function HelpAssistant() {
             ref={containerRef}
             className="mb-3 max-h-72 space-y-3 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-3"
           >
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}
-              >
-                <div
-                  className={`max-w-[82%] rounded-3xl px-4 py-3 text-sm shadow-sm break-words whitespace-pre-wrap ${
-                    message.role === "assistant"
-                      ? "bg-slate-100 text-slate-800"
-                      : "bg-slate-900 text-white"
-                  }`}
-                >
-                  {renderMessageContent(message)}
+            {messages.map((message) => {
+              const displayText = cleanEscalationText(message.text);
+              return (
+                <div key={message.id} className="space-y-2">
+                  <div className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}>
+                    <div
+                      className={`max-w-[82%] rounded-3xl px-4 py-3 text-sm shadow-sm break-words whitespace-pre-wrap ${
+                        message.role === "assistant"
+                          ? "bg-slate-100 text-slate-800"
+                          : "bg-slate-900 text-white"
+                      }`}
+                    >
+                      <span>{displayText}</span>
+                    </div>
+                  </div>
+                  {renderEscalationCard({ ...message, text: displayText })}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {loading && (
               <div className="flex items-center gap-2 text-slate-500">
                 <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-slate-500" />
@@ -223,14 +242,49 @@ export default function HelpAssistant() {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
-        aria-label="Open AI help assistant"
-      >
-        <span className="text-2xl">💬</span>
-      </button>
+      <div className="flex flex-col items-end gap-3">
+        {adminPanelOpen && (
+          <div className="w-[320px] max-w-[90vw] rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-2xl backdrop-blur-xl">
+            <div className="mb-3">
+              <p className="text-sm font-semibold text-slate-900">🆘 Contact Admin</p>
+              <p className="text-xs text-slate-600">Need urgent help? Use any of the links below.</p>
+            </div>
+            <div className="space-y-2">
+              {ADMIN_CONTACT_CARD.contacts.map((contact) => (
+                <a
+                  key={contact.label}
+                  href={contact.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100"
+                >
+                  <span>{contact.label}</span>
+                  <span className="font-medium text-slate-700">{contact.value}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={showAdminContactCard}
+            className="inline-flex items-center justify-center rounded-full border border-amber-200 bg-amber-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-2xl transition hover:bg-amber-400"
+          >
+            📞 Contact Admin
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setOpen((current) => !current)}
+            className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
+            aria-label="Open AI help assistant"
+          >
+            <span className="text-2xl">💬</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
