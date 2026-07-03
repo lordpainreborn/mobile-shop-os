@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { GoogleGenAI } from "@google/genai";
 
-const SYSTEM_PROMPT = `You are the helpful AI Support & Tutorial Assistant for 'Mobile Shop OS'. Guide shop staff clearly in English or Burmese. Explain step-by-step how to use the system:
-- Products Page: How to add, edit, or delete items and check stock inventory.
-- Repairs Page: How to open a repair ticket, track estimate costs, and update device status.
-- POS / Sales: How to add products to cart, checkout, and manage transactions.
-Keep responses friendly, structured, and concise.`;
+const SYSTEM_PROMPT = `You are the friendly, intelligent AI Support Assistant embedded inside 'Mobile Shop OS'. Speak fluently in both Burmese and English based on the user's language. Guide staff on how to use our system:
+- Products Page: Add, edit, delete items, and check inventory.
+- Repairs Page: Create repair tickets, track device repair status, update costs.
+- POS Page: Add products to cart, checkout, and generate sales invoices.
+If users ask general conversation or technical troubleshooting questions, answer them smartly and naturally like real Gemini/ChatGPT.`;
 
 const fallbackResponses: Record<string, string> = {
   addProduct: `📦 Products Page Tutorial:
@@ -61,35 +62,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing prompt." }, { status: 400 });
     }
 
-    const openAIKey = process.env.OPENAI_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
     let answer = "";
 
-    if (openAIKey) {
+    if (geminiKey) {
       try {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${openAIKey}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: prompt },
-            ],
+        const client = new GoogleGenAI({ apiKey: geminiKey });
+        const response = await client.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: `${SYSTEM_PROMPT}\n\nUser: ${prompt}`,
+          config: {
             temperature: 0.8,
-            max_tokens: 400,
-          }),
+            maxOutputTokens: 450,
+          },
         });
 
-        if (!response.ok) {
-          throw new Error(`OpenAI status ${response.status}`);
-        }
-
-        const result = await response.json();
-        answer = result?.choices?.[0]?.message?.content?.trim();
-      } catch (openAIError) {
+        answer = response.text?.trim() || "";
+      } catch (geminiError) {
+        console.error("Gemini API error:", geminiError);
         answer = await getFallbackResponse(prompt);
       }
     } else {

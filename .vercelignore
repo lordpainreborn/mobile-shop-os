@@ -1,0 +1,7 @@
+# Ignore local build artifacts and files not needed for Vercel deployment
+node_modules
+.next
+dist
+.env*
+.git
+*.log
