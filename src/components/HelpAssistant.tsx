@@ -1,168 +1,166 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { MessageCircle, Phone } from "lucide-react";
+import { useState } from "react";
+import { MessageCircle, Phone, ArrowLeft, Package, Wrench, ShoppingCart, Shield } from "lucide-react";
 
-const QUICK_TOPICS = [
-  { label: "Add Product Tutorial", prompt: "How do I add or edit products and manage inventory?" },
-  { label: "Open Repair Ticket", prompt: "How do I open a repair ticket and update device status?" },
-  { label: "POS Guide", prompt: "How do I use the POS sales flow and checkout?" },
+type TutorialId = "products" | "repairs" | "pos" | "system";
+
+type TutorialCategory = {
+  id: TutorialId;
+  emoji: string;
+  titleMy: string;
+  titleEn: string;
+  icon: React.ReactNode;
+  steps: { my: string; en: string }[];
+};
+
+const TUTORIALS: TutorialCategory[] = [
+  {
+    id: "products",
+    emoji: "\u{1F4E6}",
+    titleMy: "\u{1F4E6} \u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{1021}\u{1000}\u{1031}\u{1019}\u{1014}\u{1039}\u{1018}\u{1030} \u{1031}\u{1019}\u{102C}\u{1038}\u{1021}\u{103B}\u{1025}\u{103A}\u{1014}\u{1031}\u{101C}\u{103A}",
+    titleEn: "Products Guide",
+    icon: <Package className="h-5 w-5" />,
+    steps: [
+      { my: "\u{1021}\u{103B}\u{1025}\u{103A} Products \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Products page from the sidebar menu." },
+      { my: "\u{1021}\u{103B}\u{1025}\u{103A} \"Add Product\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}", en: 'Click the "Add Product" button at the top of the page.' },
+      { my: "\u{1021}\u{1031}\u{101C}\u{103A}\u{1019}\u{1039}\u{1018}\u{1030} \u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}\u{1026}\u{1023}\u{102C}\u{100A}\u{1019}\u{1014}\u{1039}\u{1019}\u{1038}\u{103A}\u{101A}\u{103B}\u{102F}\u{1024}", en: "Fill in the product name, category (PHONE / ACCESSORY / PART), cost, selling price, and stock quantity." },
+      { my: "\"Save\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}\u{1021}\u{1031}\u{102C} \u{1015}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A}", en: 'Click "Save" to add the product to your live inventory.' },
+      { my: "Product \u{1000}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A} \u{1001}\u{103B}\u{1025}\u{103A} Edit \u{1016}\u{103D}\u{1019}\u{103A} Delete \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A} \u{1021}\u{103B}\u{1025}\u{103A} \u{101C}\u{103B}\u{102F}\u{1024}", en: "Use Edit and Delete buttons on each product row to manage records." },
+    ],
+  },
+  {
+    id: "repairs",
+    emoji: "\u{1F6E0}\u{FE0F}",
+    titleMy: "\u{1F6E0}\u{FE0F} \u{101F}\u{102F}\u{1019}\u{103A}\u{1014}\u{1031}\u{101C}\u{103A}\u{102E}\u{1031}\u{102C}\u{103A}\u{1010}\u{103A}\u{1026} \u{102C}\u{1031}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}",
+    titleEn: "Repairs Guide",
+    icon: <Wrench className="h-5 w-5" />,
+    steps: [
+      { my: "\u{1021}\u{103B}\u{1025}\u{103A} Repairs \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Repairs page from the sidebar." },
+      { my: "\"New Ticket\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}", en: 'Click "New Ticket" to create a repair entry.' },
+      { my: "\u{1002}\u{103B}\u{1014}\u{103A}\u{1019}\u{102C}\u{1039}\u{1039}\u{1015}\u{103B}\u{102C}\u{1031}\u{1021}\u{103A} \u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}\u{1026}\u{1023}\u{102C}\u{100A}\u{1019}\u{1014}\u{1039}\u{1019}\u{1038}\u{103A} \u{101A}\u{103B}\u{102F}\u{1024}", en: "Enter customer name, phone, device model, issue description, and estimated cost." },
+      { my: "\"Save\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}\u{1021}\u{1031}\u{102C} \u{1015}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A}", en: 'Click "Save" to create the repair ticket.' },
+      { my: "Status \u{1000}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A} PENDING \u{2192} CHECKING \u{2192} REPAIRING \u{2192} READY \u{2192} DELIVERED \u{101A}\u{103B}\u{102F}\u{1024}", en: "Update status as work progresses: PENDING \u{2192} CHECKING \u{2192} REPAIRING \u{2192} READY \u{2192} DELIVERED." },
+      { my: "\u{1021}\u{103B}\u{1025}\u{103A} Technician \u{1021}\u{103B}\u{1025}\u{103A}\u{1038}\u{103A}\u{1021}\u{103A}\u{1019}\u{103A} \u{1019}\u{1031}\u{1010}\u{103A}\u{1038}\u{1039}\u{103A} \u{1027}\u{1039}\u{1019}\u{1031}\u{102C}\u{100A}\u{1024}", en: "Assign a Technician to the ticket and update progress notes." },
+    ],
+  },
+  {
+    id: "pos",
+    emoji: "\u{1F6D2}",
+    titleMy: "\u{1F6D2} \u{1000}\u{1031}\u{102C}\u{103D}\u{1039}\u{1010}\u{103A}\u{1026} \u{102C}\u{1031}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}",
+    titleEn: "POS Checkout Guide",
+    icon: <ShoppingCart className="h-5 w-5" />,
+    steps: [
+      { my: "\u{1021}\u{103B}\u{1025}\u{103A} Sales \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Sales (POS) page from the sidebar." },
+      { my: "Barcode Scanner \u{1016}\u{103D}\u{1019}\u{103A} Search Bar \u{1031}\u{102C} Product Name \u{1005}\u{102F}\u{1039}\u{1015}\u{103B}\u{1014}\u{103A}\u{1021}\u{103A}\u{1019}\u{103A} \u{1010}\u{103A}\u{1021}\u{102D}\u{102F}\u{1036}\u{1038}\u{103A}", en: "Scan a barcode or search by product name to find items." },
+      { my: "Product \u{1021}\u{103A}\u{1019}\u{103A} Cart \u{1031}\u{102C}\u{1038}\u{1039}\u{102C}\u{103A}\u{1019}\u{103A} Quantity \u{1010}\u{103A}\u{1021}\u{102D}\u{102F}\u{1036}\u{1038}\u{103A}", en: "Add products to the cart and adjust quantities as needed." },
+      { my: "Payment Method \u{1021}\u{103B}\u{1025}\u{103A} \u{1021}\u{103B}\u{1031}\u{1010}\u{103A}\u{1026}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}\u{1021}\u{1031}\u{102C} Cash / KBZ Pay / Wave Money \u{1019}\u{103B}\u{1014}\u{1039}\u{1019}\u{1038}\u{103A} \u{101A}\u{103B}\u{102F}\u{1024}", en: "Select a payment method (Cash, KBZ Pay, Wave Money, etc.)." },
+      { my: "\"Checkout\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}\u{1021}\u{1031}\u{102C} Sale \u{102C}\u{1031}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1038}\u{103A}\u{1019}\u{103A} \u{101C}\u{103B}\u{102F}\u{1024}\u{1021}\u{1031}\u{102C} Stock \u{1019}\u{103B}\u{1014}\u{1039}\u{1039}\u{1015}\u{103A}\u{1019}\u{102C}\u{1031}\u{101A}\u{1039}\u{1039}\u{1039}\u{1024}", en: 'Click "Checkout" to record the sale. Stock will update automatically.' },
+    ],
+  },
+  {
+    id: "system",
+    emoji: "\u{1F510}",
+    titleMy: "\u{1F510} \u{1000}\u{102B}\u{1014}\u{1039}\u{1021}\u{1039}\u{1031}\u{102C}\u{102F}\u{1036}\u{1038}\u{1010}\u{1038}\u{1037}\u{1031}\u{1038}\u{1039}\u{1038}\u{1038}\u{1038}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}",
+    titleEn: "System & Account Guide",
+    icon: <Shield className="h-5 w-5" />,
+    steps: [
+      { my: "Login Page \u{1031}\u{102C} Email \u{1016}\u{103D}\u{1019}\u{103A} Password \u{1010}\u{103A}\u{1021}\u{102D}\u{102F}\u{1036}\u{1038}\u{103A}\u{1021}\u{1031}\u{102C} \"Log In\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}", en: "Enter your email and password on the Login page, then click Log In." },
+      { my: "Admin \u{1021}\u{103B}\u{1025}\u{103A} Staff \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1031}\u{102C} User Management \u{1031}\u{102C} \u{1019}\u{102C}\u{1039}\u{1039}\u{1015}\u{103B}\u{1014}\u{103A}\u{1021}\u{103A}\u{1019}\u{103A} \u{101C}\u{103B}\u{102F}\u{1024}", en: "Admins can manage staff accounts via User Management in the Staff page." },
+      { my: "Roles \u{1031}\u{102C} ADMIN \u{1010}\u{1038}\u{103A} TECHNICIAN \u{1010}\u{1038}\u{103A} CASHIER \u{1021}\u{103B}\u{1025}\u{103A}\u{1038}\u{103A}\u{1021}\u{103A}\u{1019}\u{103A} \u{101C}\u{103B}\u{102F}\u{1024}", en: "Three roles available: ADMIN (full access), TECHNICIAN (repairs), CASHIER (POS)." },
+      { my: "Dashboard \u{101E}\u{1031}\u{102C} \u{1001}\u{102D}\u{102F}\u{1036}\u{1039}\u{1038}\u{1038}\u{1038}\u{1031}\u{102C}\u{1026}\u{1023}\u{102C}\u{100A}\u{1019}\u{102C}\u{1039}\u{1039}\u{1015}\u{103B}\u{1014}\u{103A}\u{1019}\u{1038}\u{103A} \u{102C}\u{1031}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1019}\u{103A} \u{1027}\u{1039}\u{1019}\u{1031}\u{102C}\u{100A}\u{1024}", en: "The Dashboard shows sales totals, repair status, and product overview." },
+      { my: "\u{1021}\u{103B}\u{1025}\u{103A} \u{1019}\u{1031}\u{1019}\u{102C}\u{1039}\u{1039}\u{1015}\u{103B}\u{1014}\u{103A}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1021}\u{103A} \u{1021}\u{103B}\u{1025}\u{103A} \u{1021}\u{1039}\u{1021}\u{1031}\u{102C}\u{1000}\u{1038}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1031}\u{102C} Contact Admin \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}", en: "For password resets or access issues, use the Contact Admin button below." },
+    ],
+  },
 ];
 
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-};
+const ADMIN_CONTACTS = [
+  { label: "Telegram", value: "@LordPainReborn", url: "https://t.me/LordPainReborn" },
+  { label: "Phone", value: "+959961089869", url: "tel:+959961089869" },
+  { label: "Viber", value: "+959798293948", url: "viber://chat?number=%2B959798293948" },
+  { label: "Facebook", value: "Bhone Myat Paing", url: "https://www.facebook.com/BhoneMyatPaing" },
+];
 
 export default function HelpAssistant() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      text: "Hello! I am your Mobile Shop OS assistant. Ask me about Products, Repairs, or Sales in English or Burmese.",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
   const [adminOpen, setAdminOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [activeTutorial, setActiveTutorial] = useState<TutorialId | null>(null);
 
-  const scrollToBottom = () => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, open]);
-
-  useEffect(() => {
-    if (cooldown <= 0) return;
-
-    const timeout = setTimeout(() => setCooldown((current) => current - 1), 1000);
-    return () => clearTimeout(timeout);
-  }, [cooldown]);
-
-  const createMessage = (role: Message["role"], text: string): Message => ({
-    id: `${role}-${Date.now()}-${Math.random()}`,
-    role,
-    text,
-  });
-
-  const renderMessageContent = (message: Message) => {
-    return <span>{message.text}</span>;
-  };
-
-  const sendPrompt = async (prompt: string) => {
-    const trimmed = prompt.trim();
-    if (!trimmed || cooldown > 0) return;
-
-    const userMessage = createMessage("user", trimmed);
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    setInput("");
-    setLoading(true);
-    setCooldown(4);
-
-    try {
-      const response = await fetch("/api/help", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: updatedMessages.map(({ role, text }) => ({ role, content: text })),
-        }),
-      });
-
-      const data = await response.json();
-      const assistantText = data?.answer || data?.error || "I couldn't get a response. Please try again.";
-
-      setMessages((current) => [...current, createMessage("assistant", assistantText)]);
-    } catch (error) {
-      setMessages((current) => [...current, createMessage("assistant", "There was an error fetching help. Please try again.")]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    await sendPrompt(input);
-  };
-
-  const quickButtons = QUICK_TOPICS.map((topic) => (
-    <button
-      key={topic.label}
-      type="button"
-      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-      onClick={() => sendPrompt(topic.prompt)}
-    >
-      {topic.label}
-    </button>
-  ));
+  const selectedTutorial = TUTORIALS.find((t) => t.id === activeTutorial);
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {open && (
-        <div className="w-[360px] max-w-[90vw] rounded-3xl border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur-xl">
+        <div className="w-[380px] max-w-[90vw] rounded-3xl border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur-xl">
           <div className="flex items-center justify-between px-2 py-2">
             <div>
-              <p className="text-sm font-semibold text-slate-900">AI Help & Tutorial</p>
-              <p className="text-xs text-slate-500">Ask in English or Burmese</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {"\u{1F4DA}"} System Tutorials & Help
+              </p>
+              <p className="text-xs text-slate-500">English / Myanmar</p>
             </div>
             <button
               type="button"
               onClick={() => setOpen(false)}
               className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-sm text-slate-600 transition hover:bg-slate-100"
-            >Close</button>
+            >
+              Close
+            </button>
           </div>
 
-          <div className="mb-3 flex flex-wrap gap-2 px-1">{quickButtons}</div>
-
-          <div
-            ref={containerRef}
-            className="mb-3 max-h-72 space-y-3 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-3"
-          >
-            {messages.map((message) => (
-              <div key={message.id} className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"}`}>
-                <div
-                  className={`max-w-[82%] rounded-3xl px-4 py-3 text-sm shadow-sm break-words whitespace-pre-wrap ${
-                    message.role === "assistant"
-                      ? "bg-slate-100 text-slate-800"
-                      : "bg-slate-900 text-white"
-                  }`}
+          <div className="mb-3 max-h-[28rem] overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-3">
+            {selectedTutorial ? (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTutorial(null)}
+                  className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
                 >
-                  {renderMessageContent(message)}
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Back to Topics
+                </button>
+
+                <div className="mb-3">
+                  <p className="text-sm font-bold text-slate-900">
+                    {selectedTutorial.emoji} {selectedTutorial.titleMy}
+                  </p>
+                  <p className="text-xs text-slate-500">{selectedTutorial.titleEn}</p>
+                </div>
+
+                <div className="space-y-3">
+                  {selectedTutorial.steps.map((step, i) => (
+                    <div key={i} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                      <div className="mb-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white">
+                        {i + 1}
+                      </div>
+                      <p className="text-sm font-medium text-slate-900">{step.my}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{step.en}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-            {loading && (
-              <div className="flex items-center gap-2 text-slate-500">
-                <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-slate-500" />
-                Loading assistant...
+            ) : (
+              <div className="space-y-2">
+                <p className="mb-2 px-1 text-xs font-medium text-slate-500">Select a topic:</p>
+                {TUTORIALS.map((tutorial) => (
+                  <button
+                    key={tutorial.id}
+                    type="button"
+                    onClick={() => setActiveTutorial(tutorial.id)}
+                    className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                      {tutorial.icon}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-slate-900 truncate">{tutorial.titleMy}</span>
+                      <span className="block text-xs text-slate-500 truncate">{tutorial.titleEn}</span>
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
           </div>
-
-          <form className="flex gap-2" onSubmit={onSubmit}>
-            <input
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask how to use a feature..."
-              disabled={loading || cooldown > 0}
-              className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-            />
-            <button
-              type="submit"
-              disabled={loading || cooldown > 0}
-              className="rounded-2xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
-            >
-              {cooldown > 0 ? `ခဏစောင့်ပါ (${cooldown}s)` : "Send"}
-            </button>
-          </form>
         </div>
       )}
 
@@ -173,22 +171,18 @@ export default function HelpAssistant() {
             <p className="text-xs text-slate-600">Need urgent help? Reach out via any channel.</p>
           </div>
           <div className="space-y-2">
-            <a href="https://t.me/LordPainReborn" target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100">
-              <span>Telegram</span>
-              <span className="font-medium text-slate-700">@LordPainReborn</span>
-            </a>
-            <a href="tel:+959961089869" className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100">
-              <span>Phone</span>
-              <span className="font-medium text-slate-700">+959961089869</span>
-            </a>
-            <a href="viber://chat?number=%2B959798293948" className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100">
-              <span>Viber</span>
-              <span className="font-medium text-slate-700">+959798293948</span>
-            </a>
-            <a href="https://www.facebook.com/BhoneMyatPaing" target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100">
-              <span>Facebook</span>
-              <span className="font-medium text-slate-700">Bhone Myat Paing</span>
-            </a>
+            {ADMIN_CONTACTS.map((contact) => (
+              <a
+                key={contact.label}
+                href={contact.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100"
+              >
+                <span>{contact.label}</span>
+                <span className="font-medium text-slate-700">{contact.value}</span>
+              </a>
+            ))}
           </div>
         </div>
       )}
@@ -207,7 +201,7 @@ export default function HelpAssistant() {
           type="button"
           onClick={() => { setOpen((c) => !c); setAdminOpen(false); }}
           className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
-          aria-label="Open AI help assistant"
+          aria-label="Open tutorials and help"
         >
           <MessageCircle className="w-6 h-6" />
         </button>
