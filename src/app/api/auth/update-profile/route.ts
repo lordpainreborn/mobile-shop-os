@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
-    const authUser = await requireAuth();
+    const authUser = await getSessionUser();
+    if (!authUser) {
+      return NextResponse.json(
+        { success: false, message: "Not authenticated." },
+        { status: 401 }
+      );
+    }
+
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 
     const name = body?.name !== undefined ? String(body.name).trim() : undefined;
@@ -31,7 +38,6 @@ export async function POST(request: Request) {
           data: updateData,
         });
       } catch {
-        // avatarUrl column may not exist yet — skip silently
         if (updateData.name) {
           await prisma.user.update({
             where: { id: authUser.id },
@@ -56,7 +62,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Profile ပြောင်းလဲခြင်း အောင်မြင်ပါသည်။",
+      message: "Profile updated successfully.",
       user: updatedUser
         ? {
             ...updatedUser,

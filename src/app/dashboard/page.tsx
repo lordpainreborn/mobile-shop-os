@@ -68,7 +68,9 @@ export default function DashboardPage() {
         setUser(data.user);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        window.location.href = "/login";
+      });
   }
 
   useEffect(() => { fetchUser(); }, []);
@@ -131,10 +133,7 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="text-center text-slate-500">
-          <p>Unable to load account data.</p>
-          <a href="/login" className="text-blue-600 text-sm mt-2 inline-block hover:underline">Go to Login</a>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </div>
     );
   }
@@ -150,7 +149,7 @@ export default function DashboardPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/aioms-logo.svg" alt="AIOMS" className="h-7 w-7 rounded-md" />
+            <img src="/aioms-logo.svg?v=3" alt="AIOMS" className="h-7 w-7 rounded-md" />
             <span className="text-sm font-bold text-slate-800">AIOMS POS</span>
             <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">v2.0</span>
           </div>

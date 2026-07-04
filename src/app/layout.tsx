@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "AIOMS POS",
   description: "PC & Cloud POS Operating System for mobile shops",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.svg?v=3",
   },
 };
 
