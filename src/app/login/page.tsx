@@ -45,22 +45,22 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 shadow-lg shadow-blue-500/30 mb-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
+      <div className="w-full max-w-lg">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 shadow-lg shadow-blue-500/30 mb-5">
             <Smartphone className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">
             Mobile Shop OS
           </h1>
-          <p className="text-slate-400 text-sm mt-1">Cloud Platform Login</p>
+          <p className="text-slate-400 text-base mt-2">Cloud Platform Login</p>
         </div>
 
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 sm:p-10">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label className="block text-sm font-semibold text-slate-300 mb-2">
                 Email
               </label>
               <input
@@ -70,12 +70,12 @@ export default function LoginPage() {
                 placeholder="you@shop.com"
                 required
                 autoFocus
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3.5 sm:p-4 rounded-xl border border-slate-700 bg-slate-800 text-base text-white placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label className="block text-sm font-semibold text-slate-300 mb-2">
                 Password
               </label>
               <input
@@ -84,12 +84,12 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3.5 sm:p-4 rounded-xl border border-slate-700 bg-slate-800 text-base text-white placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
             {error && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 font-medium">
+              <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400 font-medium">
                 {error}
               </div>
             )}
@@ -97,11 +97,11 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-slate-900/20"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 sm:py-4 text-base font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20"
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                   Signing in...
                 </>
               ) : (
@@ -110,17 +110,23 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 flex items-center justify-between text-sm">
-            <a href="/forgot-password" className="text-blue-600 font-semibold hover:underline">
-              Forgot Password?
+          <div className="mt-8 pt-6 border-t border-slate-800 space-y-3">
+            <a
+              href="/signup"
+              className="flex items-center justify-center w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+            >
+              ဖုန်းဆိုင် အကောင့်သစ် ဖွင့်ရန် (Create Account)
             </a>
-            <a href="/signup" className="text-blue-600 font-semibold hover:underline">
-              Create Account
+            <a
+              href="/forgot-password"
+              className="flex items-center justify-center w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+            >
+              စကားဝှက် မေ့နေပါသလား? (Forgot Password?)
             </a>
           </div>
         </div>
 
-        <p className="text-center text-slate-500 text-xs mt-6">
+        <p className="text-center text-slate-600 text-xs mt-6">
           Secure multi-tenant management platform
         </p>
       </div>
