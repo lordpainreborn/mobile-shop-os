@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#0f1d32"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+
+  <!-- Letter A — Left leg -->
+  <polygon points="240,920 540,200 620,200 340,920" fill="#2979FF"/>
+  <!-- Letter A — Right leg -->
+  <polygon points="860,920 660,200 740,200 960,920" fill="#2979FF"/>
+  <!-- Letter A — Crossbar (implied by arrow path) -->
+
+  <!-- Growth Arrow — sweeping curve from bottom-left up through A to top-right -->
+  <path
+    d="M 270 750 Q 400 680, 540 580 Q 680 480, 780 380 Q 860 300, 920 260 L 880 340 Q 820 400, 740 480 Q 620 580, 480 670 Q 380 730, 300 760 Z"
+    fill="#F5A623"
+  />
+  <!-- Arrow head -->
+  <polygon points="920,260 840,230 880,340" fill="#F5A623"/>
+</svg>

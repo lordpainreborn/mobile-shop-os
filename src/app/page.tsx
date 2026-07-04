@@ -341,6 +341,17 @@ export default function Home() {
       {/* Hero — Zoom-In on scroll */}
       <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center relative z-10">
+          {/* Logo Mark */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={{ ...spring, delay: 0.05 }}
+            className="mb-6"
+          >
+            <img src="/aioms-logo.svg" alt="AIOMS" className="w-20 h-20 mx-auto rounded-2xl shadow-2xl shadow-blue-600/20" />
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, scale: 0.75, y: 50 }}
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
@@ -833,9 +844,7 @@ export default function Home() {
           className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Smartphone className="w-4 h-4 text-white" />
-            </div>
+            <img src="/aioms-logo.svg" alt="AIOMS" className="w-8 h-8 rounded-lg" />
             <span className="font-bold text-sm">AIOMS</span>
           </div>
           <p className="text-xs text-slate-500">

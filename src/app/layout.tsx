@@ -8,8 +8,11 @@ import { LanguageProvider } from "@/context/LanguageContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Mobile Shop OS",
-  description: "Management system for mobile shop",
+  title: "AIOMS POS",
+  description: "PC & Cloud POS Operating System for mobile shops",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

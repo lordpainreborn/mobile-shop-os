@@ -58,10 +58,8 @@ export default function LoginPage() {
       <div className="w-full max-w-[420px] relative z-10">
         <div className="bg-white rounded-3xl shadow-2xl shadow-black/10 p-8 sm:p-10">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 mb-4">
-              <span className="text-xl font-bold text-white">A</span>
-            </div>
+            <div className="text-center mb-8">
+              <img src="/aioms-logo.svg" alt="AIOMS" className="w-14 h-14 mx-auto rounded-2xl shadow-lg shadow-blue-500/20 mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
               Log in
             </h1>
