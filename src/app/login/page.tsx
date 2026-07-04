@@ -34,11 +34,10 @@ export default function LoginPage() {
 
       const role = data.user?.role;
       if (role === "SUPER_ADMIN") {
-        router.push("/admin");
+        window.location.href = "/admin";
       } else {
-        router.push("/");
+        window.location.href = "/dashboard";
       }
-      router.refresh();
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);

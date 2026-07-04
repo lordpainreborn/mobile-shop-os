@@ -55,6 +55,7 @@ model User {
   shopId       String
   shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   createdAt    DateTime  @default(now())
+  avatarUrl    String?
 
   assignedTickets RepairTicket[] @relation("Technician")
 }

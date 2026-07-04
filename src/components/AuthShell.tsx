@@ -15,7 +15,7 @@ type UserData = {
   shopId: string;
 };
 
-const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password"];
+const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password", "/dashboard"];
 
 export default function AuthShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
