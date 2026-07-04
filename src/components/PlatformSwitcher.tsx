@@ -29,7 +29,7 @@ export default function PlatformSwitcher() {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 80, opacity: 0 }}
         transition={{ type: "spring", stiffness: 120, damping: 18, delay: 1 }}
-        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none pb-4 px-4"
+        className="fixed bottom-20 right-4 z-40 pointer-events-none"
       >
         <div className="relative pointer-events-auto">
           {/* Dismiss button */}

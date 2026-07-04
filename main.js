@@ -11,7 +11,7 @@ function createWindow() {
     minHeight: 720,
     autoHideMenuBar: true,
     title: 'AIOMS',
-    icon: path.join(__dirname, 'public', 'AIOMSLOGO.png'),
+    icon: path.join(__dirname, 'public', 'icon.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

@@ -108,7 +108,7 @@ export default function FloatingSupportWidget() {
   }, [open]);
 
   return (
-    <div ref={panelRef} className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div ref={panelRef} className="fixed bottom-4 left-4 z-50 flex flex-col items-start gap-3">
       {open && (
         <div className="w-80 sm:w-96 rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden text-slate-100">
           {/* Header */}

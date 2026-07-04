@@ -15,7 +15,7 @@ export default function Sidebar({ open = false, onClose, userRole }: SidebarProp
   const { language } = useLanguage();
 
   const navItems = [
-    { nameEn: "Dashboard", nameMy: "ပင်မစာမျက်နှာ", href: "/", icon: Home },
+    { nameEn: "Dashboard", nameMy: "ပင်မစာမျက်နှာ", href: "/sales", icon: Home },
     { nameEn: "POS / Sales", nameMy: "အရောင်းကောင်တာ (POS)", href: "/sales", icon: Receipt },
     { nameEn: "Products", nameMy: "ကုန်ပစ္စည်း စာရင်း (Inventory)", href: "/products", icon: Smartphone },
     { nameEn: "Repairs", nameMy: "ပြုပြင်ရေး စာရင်း (Repairs)", href: "/repairs", icon: Wrench },

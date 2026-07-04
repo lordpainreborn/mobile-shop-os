@@ -13,9 +13,9 @@ export const metadata: Metadata = {
   title: "AIOMS POS — All In One Mobile Shop System",
   description: "Next-Gen PC & Cloud POS Platform for Mobile Shops",
   icons: {
-    icon: "/AIOMSLOGO.png",
-    shortcut: "/AIOMSLOGO.png",
-    apple: "/AIOMSLOGO.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
