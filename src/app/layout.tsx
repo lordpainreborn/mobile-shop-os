@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-slate-50 flex min-h-screen text-slate-800`}>
+      <body className={`${inter.className} bg-slate-50 min-h-screen text-slate-800`}>
         <LanguageProvider>
           <AuthShell>{children}</AuthShell>
           <FloatingSupportWidget />
