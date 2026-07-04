@@ -6,15 +6,20 @@ import { createSession } from "@/lib/auth";
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    const email = String(body?.email ?? "").trim().toLowerCase();
+    const identifier = String(body?.email ?? "").trim().toLowerCase();
     const password = String(body?.password ?? "");
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+    if (!identifier || !password) {
+      return NextResponse.json({ error: "Email/Username and password are required" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { name: { contains: identifier, mode: "insensitive" } },
+        ],
+      },
       select: {
         id: true,
         email: true,
@@ -26,12 +31,12 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid email/username or password" }, { status: 401 });
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid email/username or password" }, { status: 401 });
     }
 
     const token = await createSession({

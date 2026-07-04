@@ -52,7 +52,7 @@ export default function LoginPage() {
             <Smartphone className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Mobile Shop OS
+            AIOMS
           </h1>
           <p className="text-slate-400 text-base mt-2">Cloud Platform Login</p>
         </div>
@@ -61,13 +61,13 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-2">
-                Email
+                Email or Username
               </label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@shop.com"
+                placeholder="you@shop.com or your name"
                 required
                 autoFocus
                 className="w-full px-4 py-3.5 sm:p-4 rounded-xl border border-slate-700 bg-slate-800 text-base text-white placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"

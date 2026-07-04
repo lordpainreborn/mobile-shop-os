@@ -70,7 +70,7 @@ export default function SignupPage() {
             <Smartphone className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Mobile Shop OS
+            AIOMS
           </h1>
           <p className="text-slate-400 text-base mt-2">
             {step === "form" ? "Create your shop account" : "Verify your email"}
