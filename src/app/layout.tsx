@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthShell from "@/components/AuthShell";
-import HelpAssistant from "@/components/HelpAssistant";
+import FloatingSupportWidget from "@/components/FloatingSupportWidget";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,7 +22,7 @@ export default function RootLayout({
       <body className={`${inter.className} bg-slate-50 flex min-h-screen text-slate-800`}>
         <LanguageProvider>
           <AuthShell>{children}</AuthShell>
-          <HelpAssistant />
+          <FloatingSupportWidget />
         </LanguageProvider>
       </body>
     </html>
