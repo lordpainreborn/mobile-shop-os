@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from 'next/cache';
-import { Prisma } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
 export type ActionResponse<T = unknown> = {
   success: boolean;
@@ -30,32 +31,27 @@ export async function createSale(
   data: CreateSaleInput
 ): Promise<ActionResponse<SaleWithItems>> {
   try {
-    if (!data.paymentMethod.trim()) {
-      return { success: false, error: 'Payment method is required' };
-    }
+    const user = await requireAuth();
 
+    if (!data.paymentMethod.trim()) {
+      return { success: false, error: "Payment method is required" };
+    }
     if (!Array.isArray(data.items) || data.items.length === 0) {
-      return { success: false, error: 'Sale items are required' };
+      return { success: false, error: "Sale items are required" };
     }
 
     const normalizedItems = data.items.reduce<Record<string, SaleItemInput>>((acc, item) => {
       const productId = item.productId.trim();
-      if (!productId) {
-        throw new Error('Product ID is required for each item');
-      }
-      if (item.quantity <= 0) {
-        throw new Error('Quantity must be greater than zero');
-      }
-      if (item.unitPrice < 0) {
-        throw new Error('Unit price must be non-negative');
-      }
+      if (!productId) throw new Error("Product ID is required for each item");
+      if (item.quantity <= 0) throw new Error("Quantity must be greater than zero");
+      if (item.unitPrice < 0) throw new Error("Unit price must be non-negative");
       const existing = acc[productId];
       if (!existing) {
         acc[productId] = { productId, quantity: item.quantity, unitPrice: item.unitPrice };
         return acc;
       }
       if (existing.unitPrice !== item.unitPrice) {
-        throw new Error('Consistent unit price required per product');
+        throw new Error("Consistent unit price required per product");
       }
       existing.quantity += item.quantity;
       return acc;
@@ -63,7 +59,7 @@ export async function createSale(
 
     const items = Object.values(normalizedItems);
     if (items.length === 0) {
-      return { success: false, error: 'Sale items are required' };
+      return { success: false, error: "Sale items are required" };
     }
 
     const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
@@ -73,7 +69,10 @@ export async function createSale(
 
     const sale = await prisma.$transaction(async (tx) => {
       const products = await tx.product.findMany({
-        where: { id: { in: items.map((item) => item.productId) } },
+        where: {
+          id: { in: items.map((item) => item.productId) },
+          shopId: user.shopId,
+        },
       });
 
       const productsById = products.reduce<Record<string, number>>((acc, product) => {
@@ -84,7 +83,7 @@ export async function createSale(
       for (const item of items) {
         const stock = productsById[item.productId];
         if (stock === undefined) {
-          throw new Error(`Product not found: ${item.productId}`);
+          throw new Error(`Product not found in your shop: ${item.productId}`);
         }
         if (stock < item.quantity) {
           throw new Error(`Insufficient stock for product: ${item.productId}`);
@@ -95,6 +94,7 @@ export async function createSale(
         data: {
           totalAmount,
           paymentMethod: data.paymentMethod.trim(),
+          shopId: user.shopId,
           items: {
             create: items.map((item) => ({
               productId: item.productId,
@@ -110,6 +110,7 @@ export async function createSale(
         const updatedCount = await tx.product.updateMany({
           where: {
             id: item.productId,
+            shopId: user.shopId,
             stockQuantity: { gte: item.quantity },
           },
           data: { stockQuantity: { decrement: item.quantity } },
@@ -122,15 +123,17 @@ export async function createSale(
       return createdSale;
     });
 
-    revalidatePath('/sales');
-    revalidatePath('/products');
-
+    revalidatePath("/sales");
+    revalidatePath("/products");
     return { success: true, data: sale };
   } catch (error) {
-    console.error('[createSale]', error);
+    console.error("[createSale]", error);
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { success: false, error: "Authentication required" };
+    }
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create sale',
+      error: error instanceof Error ? error.message : "Failed to create sale",
     };
   }
 }

@@ -7,10 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  ADMIN
-  TECHNICIAN
-  CASHIER
+enum ShopRole {
+  SUPER_ADMIN
+  SHOP_OWNER
+  STAFF
 }
 
 enum ProductCategory {
@@ -33,29 +33,49 @@ enum ImeiStatus {
   RESERVED
 }
 
+model Shop {
+  id        String   @id @default(cuid())
+  name      String
+  ownerName String
+  phone     String
+  createdAt DateTime @default(now())
+
+  users    User[]
+  products Product[]
+  sales    Sale[]
+  tickets  RepairTicket[]
+}
+
 model User {
-  id            String         @id @default(cuid())
-  name          String
-  email         String         @unique
-  role          UserRole       @default(CASHIER)
-  password      String
-  createdAt     DateTime       @default(now())
-  repairTickets RepairTicket[]
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         ShopRole @default(STAFF)
+  shopId       String
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+
+  assignedTickets RepairTicket[] @relation("Technician")
 }
 
 model Product {
   id            String          @id @default(cuid())
   name          String
-  sku           String?         @unique
+  sku           String?
   category      ProductCategory
   price         Float
   cost          Float
   stockQuantity Int             @default(0)
+  shopId        String
+  shop          Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
   createdAt     DateTime        @default(now())
-  
-  imeis         IMEI[]
-  saleItems     SaleItem[]
-  repairParts   RepairPart[]
+
+  imeis        IMEI[]
+  saleItems    SaleItem[]
+  repairParts  RepairPart[]
+
+  @@unique([shopId, sku])
 }
 
 model IMEI {
@@ -74,13 +94,15 @@ model RepairTicket {
   issueDescription String
   status           RepairStatus @default(PENDING)
   estimateCost     Float?
-  
-  technicianId     String?
-  technician       User?        @relation(fields: [technicianId], references: [id])
-  
-  usedParts        RepairPart[]
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  shopId           String
+  shop             Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  technicianId String?
+  technician   User?   @relation("Technician", fields: [technicianId], references: [id])
+
+  usedParts RepairPart[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model RepairPart {
@@ -93,11 +115,14 @@ model RepairPart {
 }
 
 model Sale {
-  id            String     @id @default(cuid())
+  id            String   @id @default(cuid())
   totalAmount   Float
   paymentMethod String
-  items         SaleItem[]
-  createdAt     DateTime   @default(now())
+  shopId        String
+  shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  items SaleItem[]
 }
 
 model SaleItem {
