@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthShell from "@/components/AuthShell";
 import FloatingSupportWidget from "@/components/FloatingSupportWidget";
 import PlatformSwitcher from "@/components/PlatformSwitcher";
+import DesktopSplashScreen from "@/components/DesktopSplashScreen";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -24,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-slate-50 min-h-screen text-slate-800`}>
+        <DesktopSplashScreen />
         <LanguageProvider>
           <AuthShell>{children}</AuthShell>
           <FloatingSupportWidget />
