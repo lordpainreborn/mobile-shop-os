@@ -1,7 +1,17 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import UserDropdown from "./UserDropdown";
+
+type UserData = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  shopId: string;
+};
 
 const NAV_LINKS = [
   { label: "Download", href: "/download" },
@@ -12,6 +22,21 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [user, setUser] = useState<UserData | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.user) setUser(data.user);
+        setAuthLoaded(true);
+      })
+      .catch(() => setAuthLoaded(true));
+  }, []);
 
   return (
     <motion.nav
@@ -20,7 +45,6 @@ export default function Navbar() {
       transition={{ duration: 0.5 }}
       className="w-full h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-50 px-6 flex items-center justify-between"
     >
-      {/* Left — Logo */}
       <a href="/" className="flex items-center gap-2.5 shrink-0">
         <span className="text-xl">🛡️</span>
         <span className="text-lg font-extrabold tracking-tight text-white">
@@ -31,7 +55,6 @@ export default function Navbar() {
         </span>
       </a>
 
-      {/* Center — Nav Links (hidden on mobile) */}
       <div className="hidden lg:flex items-center gap-6">
         {NAV_LINKS.map((link) => {
           const isActive = pathname === link.href || (link.href.startsWith("/#") && pathname === "/");
@@ -49,20 +72,27 @@ export default function Navbar() {
         })}
       </div>
 
-      {/* Right — Action Buttons */}
       <div className="flex items-center gap-3 shrink-0">
-        <a
-          href="/login"
-          className="px-4 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition"
-        >
-          Log in
-        </a>
-        <a
-          href="/signup"
-          className="px-4 py-1.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold shadow-md hover:scale-105 transition"
-        >
-          Register
-        </a>
+        {authLoaded && user ? (
+          <UserDropdown user={user} />
+        ) : authLoaded ? (
+          <>
+            <a
+              href="/login"
+              className="px-4 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition"
+            >
+              Log in
+            </a>
+            <a
+              href="/signup"
+              className="px-4 py-1.5 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold shadow-md hover:scale-105 transition"
+            >
+              Register
+            </a>
+          </>
+        ) : (
+          <div className="w-[140px] h-8" />
+        )}
       </div>
     </motion.nav>
   );
