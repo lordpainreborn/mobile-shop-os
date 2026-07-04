@@ -4,14 +4,16 @@ import { motion } from "framer-motion";
 import {
   Monitor,
   Download,
-  CheckCircle2,
   Globe,
   ArrowRight,
-  Smartphone,
-  Shield,
   Cpu,
   HardDrive,
   MemoryStick,
+  Shield,
+  Zap,
+  Cloud,
+  ExternalLink,
+  CheckCircle2,
 } from "lucide-react";
 
 const fadeUp = {
@@ -28,8 +30,8 @@ const steps = [
     num: "1",
     title: "Download Setup File",
     titleMy: "Setup File ကို Download လုပ်ပါ",
-    desc: 'Click the download button above to save "AIOMS_Setup.exe" to your computer.',
-    descMy: 'အပေါ်ရှိ Download ခလုတ်ကို နှိပ်၍ "AIOMS_Setup.exe" ကို သင့်ကွန်ပျူတာထဲသို့ သိမ်းပါ။',
+    desc: 'Click a download mirror button below to save "AIOMS_Setup.exe" to your computer.',
+    descMy: 'အောက်ရှိ Download ခလုတ်ကို နှိပ်၍ "AIOMS_Setup.exe" ကို သင့်ကွန်ပျူတာထဲသို့ သိမ်းပါ။',
   },
   {
     num: "2",
@@ -63,34 +65,9 @@ export default function DownloadPage() {
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-[120px]" />
       </div>
 
-      {/* Nav */}
-      <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="fixed top-0 w-full z-50 backdrop-blur-md bg-slate-950/75 border-b border-slate-800/80"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-extrabold tracking-tight">AIOMS</span>
-          </a>
-          <div className="flex items-center gap-3">
-            <a
-              href="/login"
-              className="px-4 py-2 rounded-lg bg-blue-600 text-sm font-semibold hover:bg-blue-500 transition"
-            >
-              Web Portal
-            </a>
-          </div>
-        </div>
-      </motion.nav>
-
       {/* Hero */}
-      <section className="relative pt-32 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center relative z-10">
+      <section className="relative pt-20 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -108,10 +85,10 @@ export default function DownloadPage() {
             animate="visible"
             className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.15]"
           >
-            AIOMS PC & Cloud POS
+            AIOMS Windows PC Application
             <br />
             <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent">
-              Windows App Download Center
+              Official Download Center
             </span>
           </motion.h1>
 
@@ -123,30 +100,107 @@ export default function DownloadPage() {
             className="mt-6 text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed"
           >
             ဖုန်းဆိုင်လုပ်ငန်းများအတွက် Windows PC Application ကို
-            တိုက်ရိုက် install လုပ်နိုင်ပါပြီ။
+            download mirror နှစ်ခုမှ ရယူနိုင်ပါပြီ။
           </motion.p>
+        </div>
+      </section>
 
-          {/* Download CTA */}
-          <motion.div
-            custom={3}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            className="mt-10 flex flex-col items-center gap-4"
-          >
-            <motion.a
-              href="/downloads/AIOMS_Setup.exe"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-blue-600 text-lg font-bold hover:bg-blue-500 transition shadow-2xl shadow-blue-600/30"
+      {/* Download Mirror Cards */}
+      <section className="pb-16 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Mirror 1 — Google Drive */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              whileHover={{ y: -8 }}
+              className="group relative bg-slate-900/80 border border-slate-800 rounded-2xl p-8 transition-all shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/30"
             >
-              <Download className="w-6 h-6" />
-              Download Windows Setup (.exe)
-            </motion.a>
-            <p className="text-xs text-slate-500">
-              Windows 10/11 • 64-bit • ~45 MB • Free Trial 30 Days
-            </p>
-          </motion.div>
+              <div className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-blue-600 text-[10px] font-bold text-white uppercase tracking-wider">
+                Fast Server
+              </div>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                  <Cloud className="h-7 w-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Google Drive</h3>
+                  <p className="text-xs text-slate-400">Reliable high-speed mirror</p>
+                </div>
+              </div>
+              <div className="space-y-2 mb-6">
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  v2.0 Setup — 64 Bit
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  Windows 10 / 11 Compatible
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  ~45 MB • Free Trial 30 Days
+                </div>
+              </div>
+              <a
+                href="https://drive.google.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-blue-600 text-sm font-bold hover:bg-blue-500 transition shadow-lg shadow-blue-600/20 group-hover:shadow-blue-600/30"
+              >
+                🚀 Download via Google Drive
+                <ExternalLink className="w-4 h-4 opacity-60" />
+              </a>
+            </motion.div>
+
+            {/* Mirror 2 — MediaFire */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.12, duration: 0.5 }}
+              whileHover={{ y: -8 }}
+              className="group relative bg-slate-900/80 border border-slate-800 rounded-2xl p-8 transition-all shadow-xl hover:shadow-amber-500/10 hover:border-amber-500/30"
+            >
+              <div className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-amber-500 text-[10px] font-bold text-slate-950 uppercase tracking-wider">
+                Direct Server
+              </div>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                  <Zap className="h-7 w-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">MediaFire</h3>
+                  <p className="text-xs text-slate-400">Alternative fast direct mirror</p>
+                </div>
+              </div>
+              <div className="space-y-2 mb-6">
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  v2.0 Setup — 64 Bit
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  Windows 10 / 11 Compatible
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  ~45 MB • Free Trial 30 Days
+                </div>
+              </div>
+              <a
+                href="https://mediafire.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-amber-500 text-sm font-bold text-slate-950 hover:bg-amber-400 transition shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/30"
+              >
+                ⚡ Download via MediaFire
+                <ExternalLink className="w-4 h-4 opacity-60" />
+              </a>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -254,11 +308,9 @@ export default function DownloadPage() {
       {/* Footer */}
       <footer className="border-t border-slate-800/50 py-8 px-4 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Smartphone className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-sm">AIOMS</span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">🛡️</span>
+            <span className="font-bold text-sm">AIOMS POS</span>
           </div>
           <p className="text-xs text-slate-500">
             &copy; {new Date().getFullYear()} AIOMS. All rights reserved.

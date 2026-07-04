@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import Navbar from "@/components/Navbar";
 import { Loader2 } from "lucide-react";
 
 type UserData = {
@@ -14,7 +15,7 @@ type UserData = {
   shopId: string;
 };
 
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password"];
+const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password"];
 
 export default function AuthShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -23,7 +24,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const isPublic = pathname === "/" || PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || (p !== "/" && pathname.startsWith(p)));
 
   useEffect(() => {
     if (isPublic) {
@@ -46,7 +47,12 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
   }, [isPublic, router, pathname]);
 
   if (isPublic) {
-    return <>{children}</>;
+    return (
+      <>
+        <Navbar />
+        {children}
+      </>
+    );
   }
 
   if (loading) {

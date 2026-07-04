@@ -276,53 +276,8 @@ export default function Home() {
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-[120px]" />
       </div>
 
-      {/* Nav */}
-      <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="fixed top-0 w-full z-50 backdrop-blur-md bg-slate-950/75 border-b border-slate-800/80"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-extrabold tracking-tight">AIOMS</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-8 text-sm text-slate-400">
-            <a href="#features" className="hover:text-white transition">
-              Features
-            </a>
-            <a href="#showcase" className="hover:text-white transition">
-              Showcase
-            </a>
-            <a href="#pricing" className="hover:text-white transition">
-              Pricing
-            </a>
-          </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="/login"
-              className="px-4 py-2 rounded-lg bg-blue-600 text-sm font-semibold hover:bg-blue-500 transition"
-            >
-              Web Portal
-            </a>
-            {!isDesktop && (
-              <a
-                href="/download"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800/80 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition"
-              >
-                <Download className="w-4 h-4" />
-                .exe
-              </a>
-            )}
-          </div>
-        </div>
-      </motion.nav>
-
       {/* Hero */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
