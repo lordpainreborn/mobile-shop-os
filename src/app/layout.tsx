@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import AppShell from "@/components/AppShell";
+import AuthShell from "@/components/AuthShell";
 import HelpAssistant from "@/components/HelpAssistant";
 import { LanguageProvider } from "@/context/LanguageContext";
 
@@ -21,7 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-slate-50 flex min-h-screen text-slate-800`}>
         <LanguageProvider>
-          <AppShell>{children}</AppShell>
+          <AuthShell>{children}</AuthShell>
           <HelpAssistant />
         </LanguageProvider>
       </body>

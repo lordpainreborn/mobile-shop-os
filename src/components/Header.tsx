@@ -1,13 +1,37 @@
 "use client";
-import { Bell, Search, UserCircle, Globe, Menu } from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Bell, Search, UserCircle, Globe, Menu, LogOut, Shield, Loader2 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface HeaderProps {
   onMenuClick?: () => void;
+  user?: {
+    name: string;
+    email: string;
+    role: string;
+  } | null;
 }
 
-export default function Header({ onMenuClick }: HeaderProps) {
+export default function Header({ onMenuClick, user }: HeaderProps) {
   const { language, toggleLanguage } = useLanguage();
+  const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/login");
+      router.refresh();
+    } catch {
+      router.push("/login");
+    }
+  };
+
+  const displayName = user?.name ?? "User";
+  const initials = displayName.charAt(0).toUpperCase();
 
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-10 shadow-sm gap-4">
@@ -22,7 +46,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
           <Search size={18} className="text-slate-400 mr-2 shrink-0" />
           <input
             type="text"
-            placeholder={language === 'en' ? 'Search products, tickets, or IMEI...' : 'ပစ္စည်းများ၊ ပြင်ဆင်မှုများ ရှာဖွေရန်...'}
+            placeholder={
+              language === "en"
+                ? "Search products, tickets, or IMEI..."
+                : "\u{1000}\u{102C}\u{1015}\u{103A}\u{1019}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}..."
+            }
             className="bg-transparent border-none outline-none text-sm w-full text-slate-700 placeholder-slate-400 min-w-0"
           />
         </div>
@@ -34,7 +62,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           className="flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all border border-slate-200 cursor-pointer"
         >
           <Globe size={16} className="text-blue-600 shrink-0" />
-          <span className="hidden sm:inline">{language === 'en' ? 'English' : 'မြန်မာ'}</span>
+          <span className="hidden sm:inline">{language === "en" ? "English" : "\u{1019}\u{103C}\u{102E}\u{102E}"}</span>
         </button>
 
         <button className="relative text-slate-500 hover:text-blue-600 transition-colors cursor-pointer">
@@ -43,12 +71,57 @@ export default function Header({ onMenuClick }: HeaderProps) {
             3
           </span>
         </button>
+
         <div className="h-8 w-px bg-slate-200 hidden sm:block" />
-        <div className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition-colors">
-          <UserCircle size={28} className="text-slate-600" />
-          <div className="text-sm hidden md:block">
-            <p className="font-semibold text-slate-700 leading-tight">Hassan</p>
-          </div>
+
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition-colors"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-sm shadow-md">
+              {initials}
+            </div>
+            <div className="text-sm hidden md:block text-left">
+              <p className="font-semibold text-slate-700 leading-tight">{displayName}</p>
+              {user?.role && (
+                <p className="text-xs text-slate-400 leading-tight">{user.role}</p>
+              )}
+            </div>
+          </button>
+
+          {menuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setMenuOpen(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-xl z-50 py-2 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100">
+                  <p className="text-sm font-semibold text-slate-900">{displayName}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{user?.email}</p>
+                  {user?.role && (
+                    <span className="inline-flex items-center gap-1 mt-1.5 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                      <Shield className="h-2.5 w-2.5" />
+                      {user.role}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
+                >
+                  {loggingOut ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogOut className="h-4 w-4" />
+                  )}
+                  Sign Out
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>
