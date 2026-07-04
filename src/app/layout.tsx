@@ -10,10 +10,12 @@ import { LanguageProvider } from "@/context/LanguageContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AIOMS POS",
-  description: "PC & Cloud POS Operating System for mobile shops",
+  title: "AIOMS POS — All In One Mobile Shop System",
+  description: "Next-Gen PC & Cloud POS Platform for Mobile Shops",
   icons: {
-    icon: "/icon.svg",
+    icon: "/AIOMSLOGO.png",
+    shortcut: "/AIOMSLOGO.png",
+    apple: "/AIOMSLOGO.png",
   },
 };
 

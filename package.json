@@ -56,7 +56,7 @@
       "output": "dist"
     },
     "win": {
-      "icon": "public/icon.svg",
+      "icon": "public/AIOMSLOGO.png",
       "target": [
         {
           "target": "nsis",
@@ -72,8 +72,8 @@
       "perMachine": false,
       "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "public/icon.svg",
-      "uninstallerIcon": "public/icon.svg"
+      "installerIcon": "public/AIOMSLOGO.png",
+      "uninstallerIcon": "public/AIOMSLOGO.png"
     }
   },
   "prisma": {
