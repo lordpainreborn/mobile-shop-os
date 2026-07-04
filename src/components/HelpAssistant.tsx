@@ -9,22 +9,10 @@ const QUICK_TOPICS = [
   { label: "POS Guide", prompt: "How do I use the POS sales flow and checkout?" },
 ];
 
-const ADMIN_CONTACT_CARD = {
-  title: "System Admin Contact",
-  subtitle: "For urgent issues, technical problems, or requests outside Mobile Shop OS scope, contact the admin directly:",
-  contacts: [
-    { label: "Telegram", value: "@LordPainReborn", url: "https://t.me/LordPainReborn" },
-    { label: "Phone", value: "+959961089869", url: "tel:+959961089869" },
-    { label: "Viber", value: "+959798293948", url: "viber://chat?number=%2B959798293948" },
-    { label: "Facebook", value: "Bhone Myat Paing", url: "https://www.facebook.com/BhoneMyatPaing" },
-  ],
-};
-
 type Message = {
   id: string;
   role: "user" | "assistant";
   text: string;
-  adminCard?: boolean;
 };
 
 export default function HelpAssistant() {
@@ -39,11 +27,7 @@ export default function HelpAssistant() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  const lastMessage = messages[messages.length - 1];
-  const hasAssistantMessage = lastMessage?.role === "assistant";
 
   const scrollToBottom = () => {
     if (containerRef.current) {
@@ -108,10 +92,6 @@ export default function HelpAssistant() {
     await sendPrompt(input);
   };
 
-  const showAdminContactCard = () => {
-    setAdminPanelOpen((current) => !current);
-  };
-
   const quickButtons = QUICK_TOPICS.map((topic) => (
     <button
       key={topic.label}
@@ -140,17 +120,6 @@ export default function HelpAssistant() {
           </div>
 
           <div className="mb-3 flex flex-wrap gap-2 px-1">{quickButtons}</div>
-
-          <div className="mb-3 flex items-center justify-between gap-2 px-1">
-            <button
-              type="button"
-              onClick={showAdminContactCard}
-              className="min-w-0 rounded-2xl bg-amber-500 px-3 py-2 text-xs font-semibold text-slate-950 shadow-sm transition hover:bg-amber-400"
-            >
-              Contact Admin
-            </button>
-            <p className="text-xs text-slate-500">Need help with a bug or out-of-scope question? Tap to escalate.</p>
-          </div>
 
           <div
             ref={containerRef}
@@ -196,49 +165,14 @@ export default function HelpAssistant() {
         </div>
       )}
 
-      <div className="flex flex-col items-end gap-3">
-        {adminPanelOpen && (
-          <div className="w-[320px] max-w-[90vw] rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-2xl backdrop-blur-xl">
-            <div className="mb-3">
-              <p className="text-sm font-semibold text-slate-900">Contact Admin</p>
-              <p className="text-xs text-slate-600">Need urgent help? Use any of the links below.</p>
-            </div>
-            <div className="space-y-2">
-              {ADMIN_CONTACT_CARD.contacts.map((contact) => (
-                <a
-                  key={contact.label}
-                  href={contact.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100"
-                >
-                  <span>{contact.label}</span>
-                  <span className="font-medium text-slate-700">{contact.value}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={showAdminContactCard}
-            className="inline-flex items-center justify-center rounded-full border border-amber-200 bg-amber-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-2xl transition hover:bg-amber-400"
-          >
-            Contact Admin
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
-            aria-label="Open AI help assistant"
-          >
-            <MessageCircle className="w-6 h-6" />
-          </button>
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
+        aria-label="Open AI help assistant"
+      >
+        <MessageCircle className="w-6 h-6" />
+      </button>
     </div>
   );
 }

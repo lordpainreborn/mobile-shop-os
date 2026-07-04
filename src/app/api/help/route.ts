@@ -69,13 +69,7 @@ async function getFallbackResponse(message: string, debugReason?: string) {
   }
 
   if (!fallbackText) {
-    fallbackText = `Hello! I am your Mobile Shop OS assistant. I can help with:
-- Products page guidance
-- Repairs page tickets and status updates
-- POS sales checkout workflows
-
-If the AI cannot answer, please contact admin:
-Telegram: @LordPainReborn | Phone: +959961089869`;
+    fallbackText = `I can help with:\n- Products page guidance\n- Repairs page tickets and status updates\n- POS sales checkout workflows\n\nPlease try asking about one of these topics.`;
   }
 
   if (debugReason && shouldExposeGeminiDebug()) {
