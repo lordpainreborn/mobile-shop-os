@@ -49,7 +49,7 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
             placeholder={
               language === "en"
                 ? "Search products, tickets, or IMEI..."
-                : "\u{1000}\u{102C}\u{1015}\u{103A}\u{1019}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}..."
+                : "ကုန်ပစ္စည်း၊ လက်ခံစာရင်း ရှာဖွေရန်..."
             }
             className="bg-transparent border-none outline-none text-sm w-full text-slate-700 placeholder-slate-400 min-w-0"
           />
@@ -62,7 +62,7 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
           className="flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all border border-slate-200 cursor-pointer"
         >
           <Globe size={16} className="text-blue-600 shrink-0" />
-          <span className="hidden sm:inline">{language === "en" ? "English" : "\u{1019}\u{103C}\u{102E}\u{102E}"}</span>
+          <span className="hidden sm:inline">{language === "en" ? "English" : "မြန်မာ"}</span>
         </button>
 
         <button className="relative text-slate-500 hover:text-blue-600 transition-colors cursor-pointer">

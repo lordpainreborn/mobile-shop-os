@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Smartphone, Wrench, Receipt, Shield, X } from "lucide-react";
+import { Home, Users, Smartphone, Wrench, Receipt, Shield, X, Banknote } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface SidebarProps {
@@ -15,17 +15,18 @@ export default function Sidebar({ open = false, onClose, userRole }: SidebarProp
   const { language } = useLanguage();
 
   const navItems = [
-    { nameEn: "Dashboard", nameMy: "\u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{1038}\u{102A}\u{1031}\u{102C}\u{1037}", href: "/", icon: Home },
-    { nameEn: "Products", nameMy: "\u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}", href: "/products", icon: Smartphone },
-    { nameEn: "Repairs", nameMy: "\u{101F}\u{102F}\u{1019}\u{103A}\u{1014}\u{1031}\u{101C}\u{103A}\u{102E}\u{1031}\u{102C}\u{103A}\u{1010}\u{103A}\u{1026}\u{1031}\u{102C}", href: "/repairs", icon: Wrench },
-    { nameEn: "POS / Sales", nameMy: "\u{1000}\u{1031}\u{102C}\u{103D}\u{1039}\u{1010}\u{103A}\u{1026} \u{102C}\u{1031}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}", href: "/sales", icon: Receipt },
-    { nameEn: "Staff", nameMy: "\u{1019}\u{103B}\u{1019}\u{1014}\u{103A}\u{1019}\u{102C}\u{1021}\u{1031}\u{102C}", href: "/staff", icon: Users },
+    { nameEn: "Dashboard", nameMy: "ပင်မစာမျက်နှာ", href: "/", icon: Home },
+    { nameEn: "POS / Sales", nameMy: "အရောင်းကောင်တာ (POS)", href: "/sales", icon: Receipt },
+    { nameEn: "Products", nameMy: "ကုန်ပစ္စည်း စာရင်း (Inventory)", href: "/products", icon: Smartphone },
+    { nameEn: "Repairs", nameMy: "ပြုပြင်ရေး စာရင်း (Repairs)", href: "/repairs", icon: Wrench },
+    { nameEn: "Expenses", nameMy: "အသုံးစရိတ် စာရင်း (Expenses)", href: "/expenses", icon: Banknote },
+    { nameEn: "Staff", nameMy: "ဝန်ထမ်းနှင့် ဆိုင်ဆက်တင် (Settings)", href: "/staff", icon: Users },
   ];
 
   if (userRole === "SUPER_ADMIN") {
     navItems.push({
       nameEn: "Admin Panel",
-      nameMy: "\u{1021}\u{103B}\u{1025}\u{103A}\u{1038}\u{103A}\u{1021}\u{103A}\u{1019}\u{103A}\u{102C}\u{1031}\u{102C}\u{1026}\u{1015}\u{103B}\u{1014}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}",
+      nameMy: "Admin Panel",
       href: "/admin",
       icon: Shield,
     });
@@ -38,9 +39,9 @@ export default function Sidebar({ open = false, onClose, userRole }: SidebarProp
     >
       <div className="flex items-center justify-between mb-10">
         <div>
-          <h2 className="text-2xl font-extrabold text-blue-400 tracking-wider">Shop OS</h2>
+          <h2 className="text-2xl font-extrabold text-blue-400 tracking-wider">AIOMS POS</h2>
           <p className="text-slate-400 text-xs mt-1 uppercase tracking-widest font-semibold">
-            {language === "en" ? "Cloud Platform" : "\u{1015}\u{103D}\u{102D}\u{1019}\u{103A}\u{1038}\u{1038}\u{1031}\u{102C}\u{1026}\u{1015}\u{103B}\u{1014}\u{103A}"}
+            {language === "en" ? "Cloud Platform" : "ဖုန်းဆိုင် စီမံခန့်ခွဲမှုစနစ်"}
           </p>
         </div>
         <button
