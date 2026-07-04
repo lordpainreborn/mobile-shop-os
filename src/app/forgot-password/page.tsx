@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, CheckCircle2, Info, Smartphone, Lock, Shield, KeyRound } from "lucide-react";
 import { sendResetOTP, verifyResetOTP } from "@/actions/forgotPasswordActions";
+import { useLanguage } from "@/context/LanguageContext";
 
 type Step = "email" | "verify";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { language, toggleLanguage } = useLanguage();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -87,24 +89,27 @@ export default function ForgotPasswordPage() {
           {/* Marketing Content */}
           <div className="max-w-md">
             <p className="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-4">
-              Account Recovery
+              {language === "en" ? "Account Recovery" : "အကောင့်ပြန်လည်ရယူခြင်း"}
             </p>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6">
-              Reset your
-              <br />
-              password
+              {language === "en" ? (
+                <>Reset your<br />password</>
+              ) : (
+                <>စကားဝှက်<br />ပြန်လည်သတ်မှတ်ရန်</>
+              )}
             </h1>
             <p className="text-blue-100 text-base lg:text-lg leading-relaxed mb-10">
-              No worries — we&apos;ll send you a verification code to reset your password
-              and get you back into your shop dashboard.
+              {language === "en"
+                ? "No worries — we'll send you a verification code to reset your password and get you back into your shop dashboard."
+                : "စိတ်မပူပါနဲ့ — သင့်စကားဝှက်ကို ပြန်လည်သတ်မှတ်ရန် verification code ပို့ပေးပါမည်။"}
             </p>
 
             {/* Feature list */}
             <div className="space-y-4">
               {[
-                { icon: <Lock className="w-5 h-5" />, text: "Secure OTP verification via email" },
-                { icon: <KeyRound className="w-5 h-5" />, text: "Set a new password instantly" },
-                { icon: <Shield className="w-5 h-5" />, text: "All data remains protected" },
+                { icon: <Lock className="w-5 h-5" />, text: language === "en" ? "Secure OTP verification via email" : "Email ဖြင့် လုံခြုံသည့် OTP စစ်ဆေးခြင်း" },
+                { icon: <KeyRound className="w-5 h-5" />, text: language === "en" ? "Set a new password instantly" : "စကားဝှက်အသစ် ချက်ချင်းသတ်မှတ်ရန်" },
+                { icon: <Shield className="w-5 h-5" />, text: language === "en" ? "All data remains protected" : "ဒေတာအားလုံး လုံခြုံဆဲ" },
               ].map((f, i) => (
                 <div key={i} className="flex items-center gap-3 text-blue-100">
                   <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
@@ -120,7 +125,7 @@ export default function ForgotPasswordPage() {
         {/* Footer link */}
         <div className="relative z-10 mt-12 lg:mt-0">
           <a href="/login" className="text-blue-200 text-sm hover:text-white transition">
-            ← Back to Sign In
+            {language === "en" ? "← Back to Sign In" : "← ပြန်၀င်ရန်"}
           </a>
         </div>
       </div>
@@ -135,17 +140,19 @@ export default function ForgotPasswordPage() {
               className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to email
+              {language === "en" ? "Back to email" : "နောက်သို့"}
             </button>
           )}
 
           <h2 className="text-2xl font-bold text-gray-900 mb-1">
-            {step === "email" ? "Forgot password?" : "Set new password"}
+            {step === "email"
+              ? (language === "en" ? "Forgot password?" : "စကားဝှက်မေ့နေပါသလား?")
+              : (language === "en" ? "Set new password" : "စကားဝှက်အသစ် သတ်မှတ်ရန်")}
           </h2>
           <p className="text-sm text-gray-500 mb-8">
             {step === "email"
-              ? "Enter your email and we'll send you a reset code."
-              : "Enter the code and your new password below."}
+              ? (language === "en" ? "Enter your email and we'll send you a reset code." : "သင့် Email ထည့်ပါ၊ reset code ပို့ပေးပါမည်။")
+              : (language === "en" ? "Enter the code and your new password below." : "ကုဒ်နှင့် စကားဝှက်အသစ် ထည့်ပါ။")}
           </p>
 
           {/* Success banner */}
@@ -177,7 +184,7 @@ export default function ForgotPasswordPage() {
           <form onSubmit={step === "email" ? handleSendOTP : handleResetPassword} className="space-y-5">
             {step === "email" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "Email address" : "Email လိပ်စာ"}</label>
                 <input
                   type="email"
                   value={email}
@@ -193,7 +200,7 @@ export default function ForgotPasswordPage() {
             {step === "verify" && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Verification Code</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "Verification Code" : "အတည်ပြုကုဒ်"}</label>
                   <input
                     type="text"
                     value={code}
@@ -206,7 +213,7 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "New Password" : "စကားဝှက်အသစ်"}</label>
                   <input
                     type="password"
                     value={newPassword}
@@ -218,7 +225,7 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "Confirm New Password" : "စကားဝှက်အသစ် အတည်ပြုရန်"}</label>
                   <input
                     type="password"
                     value={confirmPassword}
@@ -246,22 +253,48 @@ export default function ForgotPasswordPage() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {step === "email" ? "Sending code..." : "Resetting..."}
+                  {step === "email"
+                    ? (language === "en" ? "Sending code..." : "ကုဒ်ပို့နေသည်...")
+                    : (language === "en" ? "Resetting..." : "ပြန်လည်သတ်မှတ်နေသည်...")}
                 </>
               ) : step === "email" ? (
-                "Send Reset Code"
+                language === "en" ? "Send Reset Code" : "Reset Code ပို့ရန်"
               ) : (
-                "Reset Password"
+                language === "en" ? "Reset Password" : "စကားဝှက်ပြောင်းရန်"
               )}
             </button>
           </form>
 
           <p className="text-center text-gray-500 text-sm mt-8">
-            Remember your password?{" "}
+            {language === "en" ? "Remember your password?" : "စကားဝှက် မှတ်မိပါသလား?"}{" "}
             <a href="/login" className="text-blue-600 font-semibold hover:underline">
-              Log in
+              {language === "en" ? "Log in" : "ဝင်ရန်"}
             </a>
           </p>
+
+          {/* Language Toggle */}
+          <div className="flex items-center justify-center gap-2 mt-8 pt-6 border-t border-gray-100">
+            <button
+              onClick={() => language === "my" && toggleLanguage()}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                language === "en"
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              English
+            </button>
+            <button
+              onClick={() => language === "en" && toggleLanguage()}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                language === "my"
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              မြန်မာ
+            </button>
+          </div>
         </div>
       </div>
     </div>
