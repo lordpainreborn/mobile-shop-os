@@ -18,40 +18,40 @@ const TUTORIALS: TutorialCategory[] = [
   {
     id: "products",
     emoji: "\u{1F4E6}",
-    titleMy: "\u{1F4E6} \u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{1021}\u{1000}\u{1031}\u{1019}\u{1014}\u{1039}\u{1018}\u{1030} \u{1031}\u{1019}\u{102C}\u{1038}\u{1021}\u{103B}\u{1025}\u{103A}\u{1014}\u{1031}\u{101C}\u{103A}",
+    titleMy: "\u{1F4E6} Products Guide (\u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C})",
     titleEn: "Products Guide",
     icon: <Package className="h-5 w-5" />,
     steps: [
-      { my: "\u{1021}\u{103B}\u{1025}\u{103A} Products \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Products page from the sidebar menu." },
-      { my: "\u{1021}\u{103B}\u{1025}\u{103A} \"Add Product\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}", en: 'Click the "Add Product" button at the top of the page.' },
-      { my: "\u{1021}\u{1031}\u{101C}\u{103A}\u{1019}\u{1039}\u{1018}\u{1030} \u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}\u{1026}\u{1023}\u{102C}\u{100A}\u{1019}\u{1014}\u{1039}\u{1019}\u{1038}\u{103A}\u{101A}\u{103B}\u{102F}\u{1024}", en: "Fill in the product name, category (PHONE / ACCESSORY / PART), cost, selling price, and stock quantity." },
+      { my: "Products \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Products page from the sidebar menu." },
+      { my: "\"Add Product\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}", en: 'Click the "Add Product" button at the top of the page.' },
+      { my: "\u{1021}\u{1031}\u{101C}\u{103A}\u{1019}\u{1039}\u{1018}\u{1030} \u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}\u{1026}\u{1023}\u{102C}\u{100A}\u{1019}\u{1014}\u{1039}\u{1019}\u{1038}\u{103A}\u{101A}\u{103B}\u{102F}\u{1024}", en: "Fill in product name, category (PHONE / ACCESSORY / PART), cost, selling price, and stock quantity." },
       { my: "\"Save\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}\u{1021}\u{1031}\u{102C} \u{1015}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A}", en: 'Click "Save" to add the product to your live inventory.' },
-      { my: "Product \u{1000}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A} \u{1001}\u{103B}\u{1025}\u{103A} Edit \u{1016}\u{103D}\u{1019}\u{103A} Delete \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A} \u{1021}\u{103B}\u{1025}\u{103A} \u{101C}\u{103B}\u{102F}\u{1024}", en: "Use Edit and Delete buttons on each product row to manage records." },
+      { my: "Product \u{1000}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A} Edit \u{1016}\u{103D}\u{1019}\u{103A} Delete \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A} \u{1021}\u{103B}\u{1025}\u{103A} \u{101C}\u{103B}\u{102F}\u{1024}", en: "Use Edit and Delete buttons on each product row to manage records." },
     ],
   },
   {
     id: "repairs",
     emoji: "\u{1F6E0}\u{FE0F}",
-    titleMy: "\u{1F6E0}\u{FE0F} \u{101F}\u{102F}\u{1019}\u{103A}\u{1014}\u{1031}\u{101C}\u{103A}\u{102E}\u{1031}\u{102C}\u{103A}\u{1010}\u{103A}\u{1026} \u{102C}\u{1031}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}",
+    titleMy: "\u{1F6E0}\u{FE0F} Repairs Guide (\u{101F}\u{102F}\u{1019}\u{103A}\u{1014}\u{1031}\u{101C}\u{103A}\u{102E}\u{1031}\u{102C}\u{103A}\u{1010}\u{103A}\u{1026}\u{1021}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038})",
     titleEn: "Repairs Guide",
     icon: <Wrench className="h-5 w-5" />,
     steps: [
-      { my: "\u{1021}\u{103B}\u{1025}\u{103A} Repairs \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Repairs page from the sidebar." },
+      { my: "Repairs \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Repairs page from the sidebar." },
       { my: "\"New Ticket\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}", en: 'Click "New Ticket" to create a repair entry.' },
       { my: "\u{1002}\u{103B}\u{1014}\u{103A}\u{1019}\u{102C}\u{1039}\u{1039}\u{1015}\u{103B}\u{102C}\u{1031}\u{1021}\u{103A} \u{1000}\u{102B}\u{1015}\u{103A}\u{1019}\u{102C}\u{102C}\u{1021}\u{103A}\u{1038}\u{1039}\u{1038}\u{1032}\u{1021}\u{1031}\u{102C}\u{1026}\u{1023}\u{102C}\u{100A}\u{1019}\u{1014}\u{1039}\u{1019}\u{1038}\u{103A} \u{101A}\u{103B}\u{102F}\u{1024}", en: "Enter customer name, phone, device model, issue description, and estimated cost." },
       { my: "\"Save\" \u{1000}\u{103B}\u{1019}\u{103A}\u{1015}\u{103B}\u{102C}\u{1031}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}\u{1021}\u{1031}\u{102C} \u{1015}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A}", en: 'Click "Save" to create the repair ticket.' },
-      { my: "Status \u{1000}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A} PENDING \u{2192} CHECKING \u{2192} REPAIRING \u{2192} READY \u{2192} DELIVERED \u{101A}\u{103B}\u{102F}\u{1024}", en: "Update status as work progresses: PENDING \u{2192} CHECKING \u{2192} REPAIRING \u{2192} READY \u{2192} DELIVERED." },
-      { my: "\u{1021}\u{103B}\u{1025}\u{103A} Technician \u{1021}\u{103B}\u{1025}\u{103A}\u{1038}\u{103A}\u{1021}\u{103A}\u{1019}\u{103A} \u{1019}\u{1031}\u{1010}\u{103A}\u{1038}\u{1039}\u{103A} \u{1027}\u{1039}\u{1019}\u{1031}\u{102C}\u{100A}\u{1024}", en: "Assign a Technician to the ticket and update progress notes." },
+      { my: "Status \u{1000}\u{1031}\u{1010}\u{103A}\u{1019}\u{1039}\u{1015}\u{104A} PENDING \u{2192} CHECKING \u{2192} REPAIRING \u{2192} READY \u{2192} DELIVERED \u{101A}\u{103B}\u{102F}\u{1024}", en: "Update status as work progresses: PENDING > CHECKING > REPAIRING > READY > DELIVERED." },
+      { my: "Technician \u{1021}\u{103B}\u{1025}\u{103A}\u{1038}\u{103A}\u{1021}\u{103A}\u{1019}\u{103A} \u{1019}\u{1031}\u{1010}\u{103A}\u{1038}\u{1039}\u{103A} \u{1027}\u{1039}\u{1019}\u{1031}\u{102C}\u{100A}\u{1024}", en: "Assign a Technician to the ticket and update progress notes." },
     ],
   },
   {
     id: "pos",
     emoji: "\u{1F6D2}",
-    titleMy: "\u{1F6D2} \u{1000}\u{1031}\u{102C}\u{103D}\u{1039}\u{1010}\u{103A}\u{1026} \u{102C}\u{1031}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}",
+    titleMy: "\u{1F6D2} POS Checkout Guide (\u{1000}\u{1031}\u{102C}\u{103D}\u{1039}\u{1010}\u{103A}\u{1026}\u{1021}\u{1031}\u{102C}\u{1026}\u{1015}\u{103A}\u{1025}\u{1038}\u{1021}\u{103A}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038})",
     titleEn: "POS Checkout Guide",
     icon: <ShoppingCart className="h-5 w-5" />,
     steps: [
-      { my: "\u{1021}\u{103B}\u{1025}\u{103A} Sales \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Sales (POS) page from the sidebar." },
+      { my: "Sales \u{101E}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}\u{1001}\u{1031}\u{102E}\u{1024}", en: "Navigate to the Sales (POS) page from the sidebar." },
       { my: "Barcode Scanner \u{1016}\u{103D}\u{1019}\u{103A} Search Bar \u{1031}\u{102C} Product Name \u{1005}\u{102F}\u{1039}\u{1015}\u{103B}\u{1014}\u{103A}\u{1021}\u{103A}\u{1019}\u{103A} \u{1010}\u{103A}\u{1021}\u{102D}\u{102F}\u{1036}\u{1038}\u{103A}", en: "Scan a barcode or search by product name to find items." },
       { my: "Product \u{1021}\u{103A}\u{1019}\u{103A} Cart \u{1031}\u{102C}\u{1038}\u{1039}\u{102C}\u{103A}\u{1019}\u{103A} Quantity \u{1010}\u{103A}\u{1021}\u{102D}\u{102F}\u{1036}\u{1038}\u{103A}", en: "Add products to the cart and adjust quantities as needed." },
       { my: "Payment Method \u{1021}\u{103B}\u{1025}\u{103A} \u{1021}\u{103B}\u{1031}\u{1010}\u{103A}\u{1026}\u{1038}\u{103A}\u{1001}\u{103B}\u{1019}\u{103A}\u{1021}\u{1031}\u{102C} Cash / KBZ Pay / Wave Money \u{1019}\u{103B}\u{1014}\u{1039}\u{1019}\u{1038}\u{103A} \u{101A}\u{103B}\u{102F}\u{1024}", en: "Select a payment method (Cash, KBZ Pay, Wave Money, etc.)." },
@@ -61,7 +61,7 @@ const TUTORIALS: TutorialCategory[] = [
   {
     id: "system",
     emoji: "\u{1F510}",
-    titleMy: "\u{1F510} \u{1000}\u{102B}\u{1014}\u{1039}\u{1021}\u{1039}\u{1031}\u{102C}\u{102F}\u{1036}\u{1038}\u{1010}\u{1038}\u{1037}\u{1031}\u{1038}\u{1039}\u{1038}\u{1038}\u{1038}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038}",
+    titleMy: "\u{1F510} System & Account Guide (\u{1000}\u{102B}\u{1014}\u{1039}\u{1021}\u{1039}\u{1031}\u{102C}\u{102F}\u{1036}\u{1038}\u{1010}\u{1038}\u{1037}\u{1031}\u{1038}\u{1039}\u{1038}\u{1038}\u{1038}\u{1031}\u{102C}\u{1004}\u{1039}\u{1018}\u{1030}\u{1037}\u{102D}\u{100A}\u{1039}\u{1014}\u{1039}\u{102F}\u{1036}\u{1038})",
     titleEn: "System & Account Guide",
     icon: <Shield className="h-5 w-5" />,
     steps: [
@@ -122,7 +122,7 @@ export default function HelpAssistant() {
 
                 <div className="mb-3">
                   <p className="text-sm font-bold text-slate-900">
-                    {selectedTutorial.emoji} {selectedTutorial.titleMy}
+                    {selectedTutorial.titleMy}
                   </p>
                   <p className="text-xs text-slate-500">{selectedTutorial.titleEn}</p>
                 </div>
@@ -187,11 +187,11 @@ export default function HelpAssistant() {
         </div>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col items-end gap-2">
         <button
           type="button"
           onClick={() => { setAdminOpen((c) => !c); setOpen(false); }}
-          className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-2xl transition hover:bg-amber-400"
+          className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-xl transition hover:bg-amber-400"
         >
           <Phone className="h-4 w-4" />
           <span className="hidden sm:inline">Contact Admin</span>
