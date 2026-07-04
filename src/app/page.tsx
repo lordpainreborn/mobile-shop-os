@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Monitor,
@@ -255,6 +255,18 @@ const pricingPlans = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const w = window as unknown as Record<string, unknown>;
+    setIsDesktop(
+      ua.includes("electron") ||
+      ua.includes("aioms-desktop") ||
+      !!w.electron ||
+      !!w.__TAURI__
+    );
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 overflow-hidden">
@@ -296,13 +308,15 @@ export default function Home() {
             >
               Web Portal
             </a>
-            <a
-              href="#download"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800/80 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition"
-            >
-              <Download className="w-4 h-4" />
-              .exe
-            </a>
+            {!isDesktop && (
+              <a
+                href="/download"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-800/80 text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition"
+              >
+                <Download className="w-4 h-4" />
+                .exe
+              </a>
+            )}
           </div>
         </div>
       </motion.nav>
@@ -360,25 +374,49 @@ export default function Home() {
             animate="visible"
             className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <motion.a
-              href="#download"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
-            >
-              <Download className="w-5 h-5" />
-              Download Windows PC App (.exe)
-            </motion.a>
-            <motion.a
-              href="/login"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-3 px-8 py-4 rounded-xl border border-slate-700 bg-slate-800/80 text-base font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition"
-            >
-              <Globe className="w-5 h-5" />
-              Web Portal သို့ ဝင်ရန်
-              <ArrowRight className="w-4 h-4" />
-            </motion.a>
+            {isDesktop ? (
+              <>
+                <motion.a
+                  href="/login"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
+                >
+                  🔑 အကောင့်ဝင်ရန် (Login to POS)
+                </motion.a>
+                <motion.a
+                  href="/"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-3 px-8 py-4 rounded-xl border border-slate-700 bg-slate-800/80 text-base font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition"
+                >
+                  📊 Dashboard သို့ သွားရန်
+                  <ArrowRight className="w-4 h-4" />
+                </motion.a>
+              </>
+            ) : (
+              <>
+                <motion.a
+                  href="/download"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Windows PC App (.exe)
+                </motion.a>
+                <motion.a
+                  href="/login"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-3 px-8 py-4 rounded-xl border border-slate-700 bg-slate-800/80 text-base font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition"
+                >
+                  <Globe className="w-5 h-5" />
+                  Web Portal သို့ ဝင်ရန်
+                  <ArrowRight className="w-4 h-4" />
+                </motion.a>
+              </>
+            )}
           </motion.div>
         </div>
       </section>
@@ -578,38 +616,40 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Download CTA */}
-      <section id="download" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-slate-900/80 border border-slate-800 rounded-3xl p-10 sm:p-14 shadow-2xl"
-          >
-            <Monitor className="w-14 h-14 text-blue-400 mx-auto mb-6" />
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-              Windows PC App Download
-            </h2>
-            <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
-              Windows 10/11 ပေါ်တွင် တိုက်ရိုက် install လုပ်နိုင်သည့်
-              Desktop Application
-            </p>
-            <motion.a
-              href="/downloads/AIOMS_Setup_v1.0.exe"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
+      {/* Download CTA — hidden inside desktop app */}
+      {!isDesktop && (
+        <section id="download" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-slate-900/80 border border-slate-800 rounded-3xl p-10 sm:p-14 shadow-2xl"
             >
-              <Download className="w-5 h-5" />
-              Download AIOMS Setup v1.0 (.exe)
-            </motion.a>
-            <p className="text-xs text-slate-500 mt-4">
-              Windows 10/11 • 64-bit • 45 MB • Free Trial 30 Days
-            </p>
-          </motion.div>
-        </div>
-      </section>
+              <Monitor className="w-14 h-14 text-blue-400 mx-auto mb-6" />
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
+                Windows PC App Download
+              </h2>
+              <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
+                Windows 10/11 ပေါ်တွင် တိုက်ရိုက် install လုပ်နိုင်သည့်
+                Desktop Application
+              </p>
+              <motion.a
+                href="/download"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
+              >
+                <Download className="w-5 h-5" />
+                Download AIOMS Setup (.exe)
+              </motion.a>
+              <p className="text-xs text-slate-500 mt-4">
+                Windows 10/11 • 64-bit • 45 MB • Free Trial 30 Days
+              </p>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* Contact Bar */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-800/50 relative z-10">
