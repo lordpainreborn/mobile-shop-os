@@ -91,13 +91,10 @@ export default function DashboardPage() {
     setSaving(true);
     setSaveMsg(null);
     try {
-      const avatarToSend = editAvatar.startsWith("data:")
-        ? await compressImage(editAvatar, 300, 0.7)
-        : editAvatar;
       const res = await fetch("/api/auth/update-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, shopName: editShopName, avatarUrl: avatarToSend }),
+        body: JSON.stringify({ name: editName, shopName: editShopName, avatarUrl: editAvatar }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -116,51 +113,16 @@ export default function DashboardPage() {
     }
   }
 
-  async function compressImage(dataUrl: string, maxWidth = 300, quality = 0.7) {
-    return new Promise<string>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width);
-        const width = Math.round(img.width * scale);
-        const height = Math.round(img.height * scale);
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Canvas not supported"));
-          return;
-        }
-        ctx.drawImage(img, 0, 0, width, height);
-        const compressed = canvas.toDataURL("image/jpeg", quality);
-        resolve(compressed);
-      };
-      img.onerror = (error) => reject(error);
-      img.src = dataUrl;
-    });
-  }
-
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setSaveMsg({ type: "err", text: "Only images are supported." });
+    if (file.size > 2 * 1024 * 1024) {
+      setSaveMsg({ type: "err", text: "File must be under 2MB." });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setSaveMsg({ type: "err", text: "File must be under 5MB." });
-      return;
-    }
-
     const reader = new FileReader();
-    reader.onload = async () => {
-      const rawDataUrl = reader.result as string;
-      try {
-        const compressed = await compressImage(rawDataUrl, 300, 0.7);
-        setEditAvatar(compressed);
-      } catch {
-        setEditAvatar(rawDataUrl);
-      }
+    reader.onload = () => {
+      setEditAvatar(reader.result as string);
     };
     reader.readAsDataURL(file);
   }
@@ -408,28 +370,16 @@ export default function DashboardPage() {
                     onChange={handleFileUpload}
                     className="hidden"
                   />
-                  {editAvatar && editAvatar.startsWith("data:") ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400">Uploaded (compressed)</span>
-                      <button
-                        onClick={() => setEditAvatar("")}
-                        className="text-xs text-red-500 hover:text-red-700 transition cursor-pointer"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Camera className="w-4 h-4 text-slate-400 shrink-0" />
-                      <input
-                        type="url"
-                        value={editAvatar}
-                        onChange={(e) => setEditAvatar(e.target.value)}
-                        placeholder="Or paste an image URL..."
-                        className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
-                      />
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="url"
+                      value={editAvatar}
+                      onChange={(e) => setEditAvatar(e.target.value)}
+                      placeholder="Or paste an image URL..."
+                      className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
+                    />
+                  </div>
                   {editAvatar && (
                     <button
                       onClick={() => setEditAvatar("")}

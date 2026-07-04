@@ -1,7 +1,6 @@
 {
   "appId": "com.lordpainreborn.aioms",
   "productName": "AIOMS",
-  "executableName": "AIOMS",
   "files": [
     "main.js",
     "package.json",
@@ -11,7 +10,7 @@
     "output": "dist"
   },
   "win": {
-    "icon": "public/icon.png",
+    "icon": "public/AIOMSLOGO.png",
     "target": [
       {
         "target": "nsis",
@@ -25,7 +24,7 @@
     "perMachine": false,
     "allowElevation": true,
     "allowToChangeInstallationDirectory": true,
-    "installerIcon": "public/icon.png",
-    "uninstallerIcon": "public/icon.png"
+    "installerIcon": "public/AIOMSLOGO.png",
+    "uninstallerIcon": "public/AIOMSLOGO.png"
   }
 }

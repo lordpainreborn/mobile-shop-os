@@ -15,7 +15,7 @@ type UserData = {
   shopId: string;
 };
 
-const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password"];
+const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password", "/dashboard"];
 
 function isDesktopEnv() {
   if (typeof window === "undefined") return false;
@@ -96,7 +96,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
       )}
       <main className="lg:ml-64 flex-1 flex flex-col min-h-screen">
         <Header onMenuClick={() => setSidebarOpen(true)} user={user} />
-        <div className="p-4 sm:p-6 lg:p-8 flex-1 pb-24 sm:pb-32">{children}</div>
+        <div className="p-4 sm:p-6 lg:p-8 flex-1">{children}</div>
       </main>
     </>
   );

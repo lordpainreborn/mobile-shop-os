@@ -74,7 +74,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center p-4 overflow-auto pb-24 sm:pb-32 ${
+      className={`fixed inset-0 flex items-center justify-center p-4 overflow-auto ${
         desktop ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" : ""
       }`}
       style={
