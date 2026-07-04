@@ -6,7 +6,7 @@ const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? "mobile-shop-os-dev-secret-change-in-production"
 );
 
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/api/auth/login", "/api/auth/logout", "/api/auth/me"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/dashboard", "/api/auth/login", "/api/auth/logout", "/api/auth/me"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

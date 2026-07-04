@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editShopName, setEditShopName] = useState("");
@@ -72,7 +73,8 @@ export default function DashboardPage() {
         setLoading(false);
       })
       .catch(() => {
-        window.location.href = "/login";
+        setAuthError(true);
+        setLoading(false);
       });
   }
 
@@ -138,7 +140,15 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        {authError ? (
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+            <p className="text-slate-600 font-medium mb-2">Session expired or not authenticated</p>
+            <a href="/login" className="text-blue-600 text-sm font-semibold hover:underline">Go to Login</a>
+          </div>
+        ) : (
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        )}
       </div>
     );
   }
