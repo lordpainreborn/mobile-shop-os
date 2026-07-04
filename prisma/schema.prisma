@@ -134,3 +134,14 @@ model SaleItem {
   quantity  Int
   unitPrice Float
 }
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  type      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, code, type])
+}
