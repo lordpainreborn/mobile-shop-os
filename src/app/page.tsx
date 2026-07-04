@@ -18,6 +18,9 @@ import {
   ArrowRight,
   Phone,
   Send,
+  Sparkles,
+  Zap,
+  Layers,
 } from "lucide-react";
 
 const fadeUp = {
@@ -27,6 +30,64 @@ const fadeUp = {
     y: 0,
     transition: { delay: i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
   }),
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.85, filter: "blur(10px)" },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+const slideFromLeft = {
+  hidden: { opacity: 0, x: -60, filter: "blur(6px)" },
+  visible: {
+    opacity: 1,
+    x: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+const slideFromRight = {
+  hidden: { opacity: 0, x: 60, filter: "blur(6px)" },
+  visible: {
+    opacity: 1,
+    x: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+const cardReveal = {
+  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+const glowPulse = {
+  animate: {
+    boxShadow: [
+      "0 0 20px rgba(59,130,246,0.0)",
+      "0 0 40px rgba(59,130,246,0.15)",
+      "0 0 20px rgba(59,130,246,0.0)",
+    ],
+    transition: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+  },
 };
 
 const tabContent = [
@@ -41,7 +102,7 @@ const tabContent = [
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
             className="bg-slate-800/80 rounded-xl p-4 border border-slate-700/50"
           >
             <p className="text-xs text-slate-400">ယနေ့ အရောင်း</p>
@@ -52,7 +113,7 @@ const tabContent = [
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="bg-slate-800/80 rounded-xl p-4 border border-slate-700/50"
           >
             <p className="text-xs text-slate-400">အမြတ်</p>
@@ -74,7 +135,7 @@ const tabContent = [
                 key={i}
                 initial={{ height: 0 }}
                 animate={{ height: `${h}%` }}
-                transition={{ delay: 0.4 + i * 0.03, duration: 0.4 }}
+                transition={{ delay: 0.4 + i * 0.03, duration: 0.4, type: "spring", stiffness: 120 }}
                 className="flex-1 bg-gradient-to-t from-blue-600 to-blue-400 rounded-t"
               />
             ))}
@@ -251,6 +312,13 @@ const pricingPlans = [
   },
 ];
 
+const stats = [
+  { value: "1,500+", label: "Active Shops", icon: <Layers className="w-5 h-5" /> },
+  { value: "99.9%", label: "Uptime", icon: <Zap className="w-5 h-5" /> },
+  { value: "24/7", label: "Support", icon: <Sparkles className="w-5 h-5" /> },
+  { value: "<2s", label: "Load Time", icon: <Monitor className="w-5 h-5" /> },
+];
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isDesktop, setIsDesktop] = useState(false);
@@ -270,8 +338,16 @@ export default function Home() {
     <div className="min-h-screen bg-slate-950 text-slate-100 overflow-hidden">
       {/* Ambient gradient blobs */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-600/8 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-[120px]" />
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-600/8 rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{ x: [0, -25, 0], y: [0, 25, 0] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-[120px]"
+        />
       </div>
 
       {/* Hero */}
@@ -374,16 +450,55 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Stats Bar */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4"
+          >
+            {stats.map((stat, i) => (
+              <motion.div
+                key={i}
+                variants={cardReveal}
+                className="bg-slate-900/60 border border-slate-800/60 rounded-2xl p-5 text-center backdrop-blur-sm hover:border-blue-500/30 transition-colors duration-300 group"
+              >
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600/10 text-blue-400 mb-3 group-hover:scale-110 transition-transform">
+                  {stat.icon}
+                </div>
+                <p className="text-2xl sm:text-3xl font-extrabold text-white">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">{stat.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* Interactive Showcase */}
       <section id="showcase" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
             className="text-center mb-12"
           >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full px-4 py-1.5 mb-6"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-xs font-semibold text-indigo-300">Interactive Demo</span>
+            </motion.div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               ဆော့ဖ်ဝဲလ် လုပ်ဆောင်ချက် နမူနာ မြင်ကွင်းများ
             </h2>
@@ -393,10 +508,17 @@ export default function Home() {
           </motion.div>
 
           {/* Tab buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-3 mb-8"
+          >
             {tabContent.map((tab) => (
               <motion.button
                 key={tab.id}
+                variants={cardReveal}
                 onClick={() => setActiveTab(tab.id)}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
@@ -410,11 +532,14 @@ export default function Home() {
                 {tab.label}
               </motion.button>
             ))}
-          </div>
+          </motion.div>
 
           {/* Tab content */}
           <motion.div
-            layout
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
             className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl max-w-2xl mx-auto"
           >
             <div className="bg-slate-800/60 px-4 py-3 flex items-center gap-2 border-b border-slate-700/50">
@@ -451,12 +576,22 @@ export default function Home() {
       <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
             className="text-center mb-16"
           >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 bg-emerald-600/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-6"
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-xs font-semibold text-emerald-300">Powerful Features</span>
+            </motion.div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               Core Software Features
             </h2>
@@ -465,27 +600,38 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
             {features.map((f, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-                whileHover={{ y: -4, borderColor: "rgba(59, 130, 246, 0.5)" }}
-                className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 transition-all shadow-lg hover:shadow-blue-500/10"
+                variants={cardReveal}
+                whileHover={{
+                  y: -6,
+                  scale: 1.02,
+                  borderColor: "rgba(59, 130, 246, 0.4)",
+                  transition: { duration: 0.25 },
+                }}
+                className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 transition-all shadow-lg hover:shadow-blue-500/10 cursor-default group"
               >
-                <div className="w-11 h-11 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4">
+                <motion.div
+                  whileHover={{ rotate: 5, scale: 1.1 }}
+                  className="w-11 h-11 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4 group-hover:bg-blue-600/20 transition-colors"
+                >
                   {f.icon}
-                </div>
+                </motion.div>
                 <h3 className="font-bold text-white text-sm mb-2">{f.title}</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   {f.desc}
                 </p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -493,12 +639,22 @@ export default function Home() {
       <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
             className="text-center mb-16"
           >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 bg-amber-600/10 border border-amber-500/20 rounded-full px-4 py-1.5 mb-6"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs font-semibold text-amber-300">Flexible Pricing</span>
+            </motion.div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               Pricing Plans
             </h2>
@@ -507,25 +663,37 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
             {pricingPlans.map((plan, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                whileHover={{ y: -6 }}
+                variants={cardReveal}
+                whileHover={{
+                  y: -8,
+                  scale: 1.02,
+                  transition: { duration: 0.3 },
+                }}
                 className={`relative rounded-2xl p-8 border transition-all ${
                   plan.highlighted
                     ? "bg-slate-900 border-blue-500/50 shadow-2xl shadow-blue-500/10"
-                    : "bg-slate-900/80 border-slate-800"
+                    : "bg-slate-900/80 border-slate-800 hover:border-slate-700"
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-blue-600 text-xs font-bold text-white">
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-blue-600 text-xs font-bold text-white shadow-lg shadow-blue-600/30"
+                  >
                     Most Popular
-                  </div>
+                  </motion.div>
                 )}
                 <h3 className="text-lg font-bold text-white">{plan.name}</h3>
                 <div className="mt-4 mb-6">
@@ -545,10 +713,17 @@ export default function Home() {
                 </div>
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feat, j) => (
-                    <li key={j} className="flex items-center gap-2 text-sm text-slate-300">
+                    <motion.li
+                      key={j}
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: j * 0.05 }}
+                      className="flex items-center gap-2 text-sm text-slate-300"
+                    >
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                       {feat}
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
                 <motion.a
@@ -565,7 +740,7 @@ export default function Home() {
                 </motion.a>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -574,31 +749,50 @@ export default function Home() {
         <section id="download" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="bg-slate-900/80 border border-slate-800 rounded-3xl p-10 sm:p-14 shadow-2xl"
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
+              className="bg-slate-900/80 border border-slate-800 rounded-3xl p-10 sm:p-14 shadow-2xl relative overflow-hidden"
             >
-              <Monitor className="w-14 h-14 text-blue-400 mx-auto mb-6" />
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-                Windows PC App Download
-              </h2>
-              <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
-                Windows 10/11 ပေါ်တွင် တိုက်ရိုက် install လုပ်နိုင်သည့်
-                Desktop Application
-              </p>
-              <motion.a
-                href="/download"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
-              >
-                <Download className="w-5 h-5" />
-                Download AIOMS Setup (.exe)
-              </motion.a>
-              <p className="text-xs text-slate-500 mt-4">
-                Windows 10/11 • 64-bit • 45 MB • Free Trial 30 Days
-              </p>
+              {/* Animated background glow */}
+              <motion.div
+                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-20 -right-20 w-60 h-60 bg-blue-600/20 rounded-full blur-[80px]"
+              />
+              <motion.div
+                animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -bottom-20 -left-20 w-60 h-60 bg-indigo-600/20 rounded-full blur-[80px]"
+              />
+              <div className="relative z-10">
+                <motion.div
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Monitor className="w-14 h-14 text-blue-400 mx-auto mb-6" />
+                </motion.div>
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
+                  Windows PC App Download
+                </h2>
+                <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
+                  Windows 10/11 ပေါ်တွင် တိုက်ရိုက် install လုပ်နိုင်သည့်
+                  Desktop Application
+                </p>
+                <motion.a
+                  href="/download"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
+                >
+                  <Download className="w-5 h-5" />
+                  Download AIOMS Setup (.exe)
+                </motion.a>
+                <p className="text-xs text-slate-500 mt-4">
+                  Windows 10/11 • 64-bit • 45 MB • Free Trial 30 Days
+                </p>
+              </div>
             </motion.div>
           </div>
         </section>
@@ -608,9 +802,10 @@ export default function Home() {
       <section className="py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-800/50 relative z-10">
         <div className="max-w-4xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0, y: 30, scale: 0.98 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
             className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6"
           >
             <div className="text-center sm:text-left">
@@ -622,22 +817,26 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <a
+              <motion.a
                 href="https://t.me/LordPainReborn"
                 target="_blank"
                 rel="noopener noreferrer"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sm font-medium text-sky-300 hover:bg-sky-500/20 transition"
               >
                 <Send className="w-4 h-4" />
                 Telegram: @LordPainReborn
-              </a>
-              <a
+              </motion.a>
+              <motion.a
                 href="tel:+959961089869"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm font-medium text-emerald-300 hover:bg-emerald-500/20 transition"
               >
                 <Phone className="w-4 h-4" />
                 +959 961 089 869
-              </a>
+              </motion.a>
             </div>
           </motion.div>
         </div>
@@ -645,7 +844,13 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/50 py-8 px-4 relative z-10">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
               <Smartphone className="w-4 h-4 text-white" />
@@ -663,7 +868,7 @@ export default function Home() {
               Sign Up
             </a>
           </div>
-        </div>
+        </motion.div>
       </footer>
     </div>
   );
