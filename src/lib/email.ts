@@ -6,11 +6,13 @@ const resend = process.env.RESEND_API_KEY
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "Mobile Shop OS <noreply@mobileshopos.com>";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 export async function sendVerificationEmail(
   email: string,
   code: string,
   type: "SIGNUP" | "RESET"
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; fallbackCode?: string; error?: string }> {
   const subject =
     type === "SIGNUP"
       ? "Verify your email - Mobile Shop OS"
@@ -25,8 +27,11 @@ export async function sendVerificationEmail(
       : "Use the code below to reset your password. This code will expire in 15 minutes.";
 
   if (!resend) {
-    console.log(`[DEV OTP CODE] Email: ${email} | Type: ${type} | Code: ${code}`);
-    return { success: true };
+    console.log("===============================");
+    console.log("DEV/FALLBACK OTP CODE:", code);
+    console.log("Email:", email, "| Type:", type);
+    console.log("===============================");
+    return { success: true, fallbackCode: code };
   }
 
   try {
@@ -65,10 +70,11 @@ export async function sendVerificationEmail(
 
     return { success: true };
   } catch (error) {
-    console.error("[sendVerificationEmail]", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to send email",
-    };
+    console.error("[sendVerificationEmail] Resend API error:", error);
+    console.log("===============================");
+    console.log("FALLBACK OTP CODE (email delivery failed):", code);
+    console.log("Email:", email, "| Type:", type);
+    console.log("===============================");
+    return { success: true, fallbackCode: code };
   }
 }

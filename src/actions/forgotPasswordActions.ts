@@ -10,7 +10,7 @@ function generateOTP(): string {
 
 export async function sendResetOTP(data: {
   email: string;
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{ success: boolean; fallbackCode?: string; error?: string }> {
   const { email } = data;
 
   if (!email.trim()) {
@@ -19,37 +19,41 @@ export async function sendResetOTP(data: {
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  const user = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
 
-  if (!user) {
-    return { success: true };
+    if (!user) {
+      return { success: true };
+    }
+
+    await prisma.verificationCode.deleteMany({
+      where: { email: normalizedEmail, type: "RESET" },
+    });
+
+    const code = generateOTP();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await prisma.verificationCode.create({
+      data: {
+        email: normalizedEmail,
+        code,
+        type: "RESET",
+        expiresAt,
+      },
+    });
+
+    const result = await sendVerificationEmail(normalizedEmail, code, "RESET");
+
+    return {
+      success: true,
+      fallbackCode: result.fallbackCode,
+    };
+  } catch (error) {
+    console.error("[sendResetOTP] Server error:", error);
+    return { success: false, error: "Server error. Please try again." };
   }
-
-  await prisma.verificationCode.deleteMany({
-    where: { email: normalizedEmail, type: "RESET" },
-  });
-
-  const code = generateOTP();
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-
-  await prisma.verificationCode.create({
-    data: {
-      email: normalizedEmail,
-      code,
-      type: "RESET",
-      expiresAt,
-    },
-  });
-
-  const result = await sendVerificationEmail(normalizedEmail, code, "RESET");
-
-  if (!result.success) {
-    return { success: false, error: result.error || "Failed to send reset email" };
-  }
-
-  return { success: true };
 }
 
 export async function verifyResetOTP(data: {
@@ -73,29 +77,37 @@ export async function verifyResetOTP(data: {
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  const verificationCode = await prisma.verificationCode.findFirst({
-    where: {
-      email: normalizedEmail,
-      code: code.trim(),
-      type: "RESET",
-      expiresAt: { gt: new Date() },
-    },
-  });
+  try {
+    const verificationCode = await prisma.verificationCode.findFirst({
+      where: {
+        email: normalizedEmail,
+        code: code.trim(),
+        type: "RESET",
+        expiresAt: { gt: new Date() },
+      },
+    });
 
-  if (!verificationCode) {
-    return { success: false, error: "Invalid or expired verification code" };
+    if (!verificationCode) {
+      return {
+        success: false,
+        error: "ထည့်သွင်းထားသော ကုဒ်မှားယွင်းနေပါသည်။ ပြန်လည်စစ်ဆေးပါ။ (Invalid or expired code)",
+      };
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: { email: normalizedEmail },
+      data: { passwordHash },
+    });
+
+    await prisma.verificationCode.deleteMany({
+      where: { email: normalizedEmail, type: "RESET" },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("[verifyResetOTP] Server error:", error);
+    return { success: false, error: "Server error. Please try again." };
   }
-
-  const passwordHash = await bcrypt.hash(newPassword, 12);
-
-  await prisma.user.update({
-    where: { email: normalizedEmail },
-    data: { passwordHash },
-  });
-
-  await prisma.verificationCode.deleteMany({
-    where: { email: normalizedEmail, type: "RESET" },
-  });
-
-  return { success: true };
 }

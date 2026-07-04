@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Smartphone, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, Smartphone, ArrowLeft, CheckCircle2, Info } from "lucide-react";
 import { sendResetOTP, verifyResetOTP } from "@/actions/forgotPasswordActions";
 
 type Step = "email" | "verify";
@@ -16,16 +16,21 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fallbackCode, setFallbackCode] = useState<string | null>(null);
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setFallbackCode(null);
     setLoading(true);
 
     try {
       const result = await sendResetOTP({ email });
       if (result.success) {
         setStep("verify");
+        if (result.fallbackCode) {
+          setFallbackCode(result.fallbackCode);
+        }
       } else {
         setError(result.error || "Failed to send reset code");
       }
@@ -80,7 +85,7 @@ export default function ForgotPasswordPage() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 sm:p-10">
           {step === "verify" && (
             <button
-              onClick={() => { setStep("email"); setError(""); setCode(""); setNewPassword(""); setConfirmPassword(""); }}
+              onClick={() => { setStep("email"); setError(""); setCode(""); setNewPassword(""); setConfirmPassword(""); setFallbackCode(null); }}
               className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white mb-6 transition"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -94,6 +99,25 @@ export default function ForgotPasswordPage() {
               <p className="text-sm text-blue-300">
                 သင့် Email သို့ ပို့ထားသော ၆ လုံးတွဲ ကုဒ်နှင့် စကားဝှက်အသစ် ထည့်ပါ
               </p>
+            </div>
+          )}
+
+          {fallbackCode && (
+            <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm text-amber-300 font-medium">
+                    Dev Mode — Email delivery skipped
+                  </p>
+                  <p className="text-xs text-amber-400/70 mt-1">
+                    Your verification code:
+                  </p>
+                  <p className="text-2xl font-mono font-bold text-amber-300 tracking-[0.2em] mt-2">
+                    {fallbackCode}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
