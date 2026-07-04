@@ -362,15 +362,13 @@ export default function Home() {
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
             viewport={{ once: false, amount: 0.25 }}
             transition={{ ...spring, delay: 0.1 }}
-            className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1]"
+            className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight"
           >
-            AIOMS
-            <br />
-            <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent">
+            <span className="block leading-[1.1]">AIOMS</span>
+            <span className="block leading-[1.6] py-2 bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-500 bg-clip-text text-transparent">
               အဆင့်မြင့် ဖုန်းဆိုင်သုံး
             </span>
-            <br />
-            PC & Cloud POS စနစ်
+            <span className="block leading-[1.2] mt-1">PC & Cloud POS စနစ်</span>
           </motion.h1>
 
           <motion.p

@@ -38,13 +38,11 @@ export default function UserDropdown({ user }: UserDropdownProps) {
   const isDesktop = typeof navigator !== "undefined" &&
     (navigator.userAgent.toLowerCase().includes("electron") || navigator.userAgent.toLowerCase().includes("aioms-desktop"));
 
-  async function handleLogout() {
+  function handleLogout() {
     setLoggingOut(true);
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } catch { /* ok */ }
     router.push("/");
-    router.refresh();
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    setTimeout(() => router.refresh(), 100);
   }
 
   return (
@@ -99,7 +97,7 @@ export default function UserDropdown({ user }: UserDropdownProps) {
                 Account Details
               </button>
               <button
-                onClick={() => { setOpen(false); router.push("/forgot-password"); }}
+                onClick={() => { setOpen(false); router.push("/settings/password"); }}
                 className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition text-left"
               >
                 <KeyRound className="h-4 w-4 text-slate-500 shrink-0" />
