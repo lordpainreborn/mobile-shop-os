@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Smartphone, Download, Sparkles, Gem, KeyRound } from "lucide-react";
+import { Download, Sparkles, Gem, KeyRound } from "lucide-react";
 
 const NAV_LINKS = [
   { label: "Download", labelMy: "📥 Download", href: "/download", icon: <Download className="w-3.5 h-3.5" /> },

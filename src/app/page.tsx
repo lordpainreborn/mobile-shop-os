@@ -15,9 +15,7 @@ import {
   Download,
   Smartphone,
   CheckCircle2,
-  Star,
   ArrowRight,
-  Zap,
   Phone,
   Send,
 } from "lucide-react";
