@@ -46,7 +46,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+    <div className="fixed inset-0 flex items-center justify-center p-4 overflow-auto"
       style={{
         background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 15%, #7dd3fc 30%, #38bdf8 50%, #818cf8 70%, #c084fc 85%, #f0abfc 100%)",
       }}
