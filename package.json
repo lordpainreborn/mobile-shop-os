@@ -10,7 +10,8 @@
     "build:win": "electron-builder --win --x64",
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
-    "db:setup": "prisma db push && npx tsx prisma/seed.ts"
+    "db:setup": "prisma db push && npx tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
