@@ -23,49 +23,22 @@ import {
   Layers,
 } from "lucide-react";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
+const spring = { type: "spring" as const, stiffness: 80, damping: 15 };
+
+const zoomIn = {
+  hidden: { opacity: 0, scale: 0.75, y: 50 },
+  visible: {
     opacity: 1,
+    scale: 1,
     y: 0,
-    transition: { delay: i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
-  }),
+    transition: { type: "spring" as const, stiffness: 80, damping: 15 },
+  },
 };
 
 const staggerContainer = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.85, filter: "blur(10px)" },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    filter: "blur(0px)",
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-  },
-};
-
-const slideFromLeft = {
-  hidden: { opacity: 0, x: -60, filter: "blur(6px)" },
-  visible: {
-    opacity: 1,
-    x: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-  },
-};
-
-const slideFromRight = {
-  hidden: { opacity: 0, x: 60, filter: "blur(6px)" },
-  visible: {
-    opacity: 1,
-    x: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
   },
 };
 
@@ -75,19 +48,35 @@ const cardReveal = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { type: "spring" as const, stiffness: 100, damping: 14 },
   },
 };
 
-const glowPulse = {
-  animate: {
-    boxShadow: [
-      "0 0 20px rgba(59,130,246,0.0)",
-      "0 0 40px rgba(59,130,246,0.15)",
-      "0 0 20px rgba(59,130,246,0.0)",
-    ],
-    transition: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+const slideFromLeft = {
+  hidden: { opacity: 0, x: -120 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: spring,
   },
+};
+
+const slideFromRight = {
+  hidden: { opacity: 0, x: 120 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: spring,
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
+  }),
 };
 
 const tabContent = [
@@ -180,8 +169,8 @@ const tabContent = [
           </div>
         </motion.div>
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.04, y: -2 }}
+          whileTap={{ scale: 0.96 }}
           className="w-full py-3 rounded-xl bg-emerald-600 text-sm font-semibold hover:bg-emerald-500 transition shadow-lg shadow-emerald-600/20"
         >
           ငွေပေးငွေယူ ပြီးမြောက်ရန်
@@ -336,7 +325,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 overflow-hidden">
-      {/* Ambient gradient blobs */}
       <div className="fixed inset-0 pointer-events-none">
         <motion.div
           animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
@@ -350,13 +338,14 @@ export default function Home() {
         />
       </div>
 
-      {/* Hero */}
+      {/* Hero — Zoom-In on scroll */}
       <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0, scale: 0.75, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={spring}
             className="inline-flex items-center gap-2 bg-blue-600/10 border border-blue-500/20 rounded-full px-4 py-1.5 mb-8"
           >
             <span className="relative flex h-2 w-2">
@@ -369,10 +358,10 @@ export default function Home() {
           </motion.div>
 
           <motion.h1
-            custom={1}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
+            initial={{ opacity: 0, scale: 0.75, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={{ ...spring, delay: 0.1 }}
             className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1]"
           >
             AIOMS
@@ -385,10 +374,10 @@ export default function Home() {
           </motion.h1>
 
           <motion.p
-            custom={2}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
+            initial={{ opacity: 0, scale: 0.75, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={{ ...spring, delay: 0.2 }}
             className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed"
           >
             ဖုန်းဆိုင်လုပ်ငန်းများအတွက် Windows PC Application နှင့် Cloud Web
@@ -397,26 +386,26 @@ export default function Home() {
           </motion.p>
 
           <motion.div
-            custom={3}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
+            initial={{ opacity: 0, scale: 0.75, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={{ ...spring, delay: 0.3 }}
             className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             {isDesktop ? (
               <>
                 <motion.a
                   href="/login"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.04, y: -6, boxShadow: "0px 20px 40px rgba(59, 130, 246, 0.25)" }}
+                  whileTap={{ scale: 0.96 }}
                   className="flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
                 >
                   🔑 အကောင့်ဝင်ရန် (Login to POS)
                 </motion.a>
                 <motion.a
                   href="/"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.04, y: -6 }}
+                  whileTap={{ scale: 0.96 }}
                   className="flex items-center gap-3 px-8 py-4 rounded-xl border border-slate-700 bg-slate-800/80 text-base font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition"
                 >
                   📊 Dashboard သို့ သွားရန်
@@ -427,8 +416,8 @@ export default function Home() {
               <>
                 <motion.a
                   href="/download"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.04, y: -6, boxShadow: "0px 20px 40px rgba(59, 130, 246, 0.25)" }}
+                  whileTap={{ scale: 0.96 }}
                   className="flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
                 >
                   <Download className="w-5 h-5" />
@@ -436,8 +425,8 @@ export default function Home() {
                 </motion.a>
                 <motion.a
                   href="/login"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.04, y: -6 }}
+                  whileTap={{ scale: 0.96 }}
                   className="flex items-center gap-3 px-8 py-4 rounded-xl border border-slate-700 bg-slate-800/80 text-base font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition"
                 >
                   <Globe className="w-5 h-5" />
@@ -450,23 +439,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Bar */}
+      {/* Stats Bar — stagger + scale on scroll */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-5xl mx-auto">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
+            viewport={{ once: false, amount: 0.25 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-4"
           >
             {stats.map((stat, i) => (
               <motion.div
                 key={i}
-                variants={cardReveal}
+                variants={zoomIn}
+                whileHover={{ scale: 1.06, y: -4 }}
                 className="bg-slate-900/60 border border-slate-800/60 rounded-2xl p-5 text-center backdrop-blur-sm hover:border-blue-500/30 transition-colors duration-300 group"
               >
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600/10 text-blue-400 mb-3 group-hover:scale-110 transition-transform">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600/10 text-blue-400 mb-3 group-hover:scale-125 transition-transform duration-300">
                   {stat.icon}
                 </div>
                 <p className="text-2xl sm:text-3xl font-extrabold text-white">
@@ -479,26 +469,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Interactive Showcase */}
+      {/* Showcase — scale zoom on scroll */}
       <section id="showcase" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
+            initial={{ opacity: 0, scale: 0.75, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={spring}
             className="text-center mb-12"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full px-4 py-1.5 mb-6"
-            >
+            <div className="inline-flex items-center gap-2 bg-indigo-600/10 border border-indigo-500/20 rounded-full px-4 py-1.5 mb-6">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
               <span className="text-xs font-semibold text-indigo-300">Interactive Demo</span>
-            </motion.div>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               ဆော့ဖ်ဝဲလ် လုပ်ဆောင်ချက် နမူနာ မြင်ကွင်းများ
             </h2>
@@ -507,12 +491,11 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {/* Tab buttons */}
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
+            viewport={{ once: false, amount: 0.25 }}
             className="flex flex-wrap items-center justify-center gap-3 mb-8"
           >
             {tabContent.map((tab) => (
@@ -520,8 +503,8 @@ export default function Home() {
                 key={tab.id}
                 variants={cardReveal}
                 onClick={() => setActiveTab(tab.id)}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.04, y: -4 }}
+                whileTap={{ scale: 0.96 }}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   activeTab === tab.id
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
@@ -534,12 +517,11 @@ export default function Home() {
             ))}
           </motion.div>
 
-          {/* Tab content */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
+            initial={{ opacity: 0, scale: 0.75, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={spring}
             className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl max-w-2xl mx-auto"
           >
             <div className="bg-slate-800/60 px-4 py-3 flex items-center gap-2 border-b border-slate-700/50">
@@ -572,26 +554,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* Features — stagger cascade + levitation hover */}
       <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
+            initial={{ opacity: 0, scale: 0.75, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={spring}
             className="text-center mb-16"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 bg-emerald-600/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-6"
-            >
+            <div className="inline-flex items-center gap-2 bg-emerald-600/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-6">
               <Zap className="w-3.5 h-3.5 text-emerald-400" />
               <span className="text-xs font-semibold text-emerald-300">Powerful Features</span>
-            </motion.div>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               Core Software Features
             </h2>
@@ -604,7 +580,7 @@ export default function Home() {
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
+            viewport={{ once: false, amount: 0.15 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {features.map((f, i) => (
@@ -612,15 +588,18 @@ export default function Home() {
                 key={i}
                 variants={cardReveal}
                 whileHover={{
+                  scale: 1.04,
                   y: -6,
-                  scale: 1.02,
+                  boxShadow: "0px 20px 40px rgba(59, 130, 246, 0.25)",
                   borderColor: "rgba(59, 130, 246, 0.4)",
-                  transition: { duration: 0.25 },
                 }}
-                className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 transition-all shadow-lg hover:shadow-blue-500/10 cursor-default group"
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 transition-colors shadow-lg hover:shadow-blue-500/10 cursor-default group"
               >
                 <motion.div
-                  whileHover={{ rotate: 5, scale: 1.1 }}
+                  whileHover={{ rotate: 8, scale: 1.15 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                   className="w-11 h-11 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4 group-hover:bg-blue-600/20 transition-colors"
                 >
                   {f.icon}
@@ -635,26 +614,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Pricing — stagger + zoom + levitation */}
       <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
+            initial={{ opacity: 0, scale: 0.75, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={spring}
             className="text-center mb-16"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 bg-amber-600/10 border border-amber-500/20 rounded-full px-4 py-1.5 mb-6"
-            >
+            <div className="inline-flex items-center gap-2 bg-amber-600/10 border border-amber-500/20 rounded-full px-4 py-1.5 mb-6">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span className="text-xs font-semibold text-amber-300">Flexible Pricing</span>
-            </motion.div>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               Pricing Plans
             </h2>
@@ -667,7 +640,7 @@ export default function Home() {
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
+            viewport={{ once: false, amount: 0.15 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
             {pricingPlans.map((plan, i) => (
@@ -675,11 +648,13 @@ export default function Home() {
                 key={i}
                 variants={cardReveal}
                 whileHover={{
+                  scale: 1.04,
                   y: -8,
-                  scale: 1.02,
-                  transition: { duration: 0.3 },
+                  boxShadow: "0px 25px 50px rgba(59, 130, 246, 0.2)",
                 }}
-                className={`relative rounded-2xl p-8 border transition-all ${
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`relative rounded-2xl p-8 border transition-colors ${
                   plan.highlighted
                     ? "bg-slate-900 border-blue-500/50 shadow-2xl shadow-blue-500/10"
                     : "bg-slate-900/80 border-slate-800 hover:border-slate-700"
@@ -689,7 +664,8 @@ export default function Home() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false }}
+                    transition={spring}
                     className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-blue-600 text-xs font-bold text-white shadow-lg shadow-blue-600/30"
                   >
                     Most Popular
@@ -717,7 +693,7 @@ export default function Home() {
                       key={j}
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
+                      viewport={{ once: false }}
                       transition={{ delay: j * 0.05 }}
                       className="flex items-center gap-2 text-sm text-slate-300"
                     >
@@ -728,8 +704,8 @@ export default function Home() {
                 </ul>
                 <motion.a
                   href="/signup"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={{ scale: 1.04, y: -4, boxShadow: "0px 15px 30px rgba(59, 130, 246, 0.2)" }}
+                  whileTap={{ scale: 0.96 }}
                   className={`block w-full text-center py-3 rounded-xl text-sm font-semibold transition ${
                     plan.highlighted
                       ? "bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-600/20"
@@ -744,18 +720,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Download CTA — hidden inside desktop app */}
+      {/* Download CTA — zoom + floating glow */}
       {!isDesktop && (
         <section id="download" className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
+              initial={{ opacity: 0, scale: 0.75, y: 50 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.25 }}
+              transition={spring}
               className="bg-slate-900/80 border border-slate-800 rounded-3xl p-10 sm:p-14 shadow-2xl relative overflow-hidden"
             >
-              {/* Animated background glow */}
               <motion.div
                 animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -768,7 +743,7 @@ export default function Home() {
               />
               <div className="relative z-10">
                 <motion.div
-                  animate={{ y: [0, -6, 0] }}
+                  animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <Monitor className="w-14 h-14 text-blue-400 mx-auto mb-6" />
@@ -782,8 +757,8 @@ export default function Home() {
                 </p>
                 <motion.a
                   href="/download"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.04, y: -6, boxShadow: "0px 20px 40px rgba(59, 130, 246, 0.25)" }}
+                  whileTap={{ scale: 0.96 }}
                   className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-blue-600 text-base font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/25"
                 >
                   <Download className="w-5 h-5" />
@@ -798,30 +773,38 @@ export default function Home() {
         </section>
       )}
 
-      {/* Contact Bar */}
+      {/* Contact Bar — convergence left+right */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-800/50 relative z-10">
         <div className="max-w-4xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.98 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
             className="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6"
           >
-            <div className="text-center sm:text-left">
+            <motion.div
+              variants={slideFromLeft}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: false, amount: 0.3 }}
+              className="text-center sm:text-left"
+            >
               <h3 className="text-lg font-bold text-white">
                 📞 Contact Admin
               </h3>
               <p className="text-sm text-slate-400 mt-1">
                 မေးခွန်းများရှိပါက ဆက်သွယ်ပါ
               </p>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-4">
+            </motion.div>
+            <motion.div
+              variants={slideFromRight}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: false, amount: 0.3 }}
+              className="flex flex-wrap items-center justify-center gap-4"
+            >
               <motion.a
                 href="https://t.me/LordPainReborn"
                 target="_blank"
                 rel="noopener noreferrer"
-                whileHover={{ scale: 1.04 }}
+                whileHover={{ scale: 1.04, y: -4, boxShadow: "0px 12px 24px rgba(56, 189, 248, 0.15)" }}
                 whileTap={{ scale: 0.96 }}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sm font-medium text-sky-300 hover:bg-sky-500/20 transition"
               >
@@ -830,14 +813,14 @@ export default function Home() {
               </motion.a>
               <motion.a
                 href="tel:+959961089869"
-                whileHover={{ scale: 1.04 }}
+                whileHover={{ scale: 1.04, y: -4, boxShadow: "0px 12px 24px rgba(52, 211, 153, 0.15)" }}
                 whileTap={{ scale: 0.96 }}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm font-medium text-emerald-300 hover:bg-emerald-500/20 transition"
               >
                 <Phone className="w-4 h-4" />
                 +959 961 089 869
               </motion.a>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
