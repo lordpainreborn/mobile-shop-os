@@ -1,19 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0a1628"/>
-      <stop offset="100%" stop-color="#0f1d32"/>
+      <stop offset="100%" stop-color="#0f1d35"/>
     </linearGradient>
   </defs>
 
   <!-- Background -->
-  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="80" fill="url(#bg)"/>
 
   <!-- Letter A — Left leg -->
-  <polygon points="200,950 520,180 590,180 290,950" fill="#2979FF"/>
+  <polygon points="115,420 235,70 265,70 150,420" fill="#2979FF"/>
   <!-- Letter A — Right leg -->
-  <polygon points="910,950 610,180 680,180 1000,950" fill="#2979FF"/>
+  <polygon points="397,420 275,70 305,70 420,420" fill="#2979FF"/>
+
   <!-- Growth Arrow — sweeping curve from bottom-left through A to top-right -->
-  <path d="M 220 780 Q 350 720, 480 620 Q 610 520, 720 420 Q 800 350, 860 300 L 830 370 Q 770 430, 680 520 Q 560 630, 430 730 Q 340 780, 250 800 Z" fill="#F5A623"/>
-  <polygon points="870,290 820,350 890,340" fill="#F5A623"/>
+  <path d="M 125 360 Q 180 340, 240 300 Q 300 260, 340 220 Q 370 190, 390 165 L 375 195 Q 350 225, 310 260 Q 260 305, 200 345 Q 160 365, 130 370 Z" fill="#F5A623"/>
+  <!-- Arrow head -->
+  <polygon points="395,155 370,195 400,185" fill="#F5A623"/>
 </svg>

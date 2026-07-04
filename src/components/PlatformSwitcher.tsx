@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Monitor, Globe, X } from "lucide-react";
+import { Monitor, X } from "lucide-react";
 
 export default function PlatformSwitcher() {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -15,11 +15,12 @@ export default function PlatformSwitcher() {
       ua.includes("electron") ||
       ua.includes("aioms-desktop") ||
       !!w.electron ||
-      !!w.__TAURI__
+      !!w.__TAURI__ ||
+      !!w.__ELECTRON__
     );
   }, []);
 
-  if (!visible) return null;
+  if (!visible || isDesktop) return null;
 
   return (
     <AnimatePresence>
@@ -39,26 +40,7 @@ export default function PlatformSwitcher() {
             <X className="w-3 h-3" />
           </button>
 
-          {isDesktop ? (
-            /* Desktop exe → Go to Web */
-            <a
-              href="https://mobile-shop-os.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-2.5 pl-4 pr-5 py-2.5 rounded-full bg-slate-900/95 backdrop-blur-md border border-blue-500/30 shadow-[0_0_30px_rgba(59,130,246,0.15)] hover:border-blue-400/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.25)] transition-all duration-300"
-            >
-              <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/15 border border-blue-500/30">
-                <Globe className="w-4 h-4 text-blue-400" />
-                <span className="absolute inset-0 rounded-full bg-blue-400/10 animate-ping" />
-              </span>
-              <div className="flex flex-col leading-none">
-                <span className="text-xs text-slate-400 font-medium">Switch to</span>
-                <span className="text-sm font-bold text-white tracking-tight">
-                  Go to <span className="text-blue-400">Web</span>
-                </span>
-              </div>
-            </a>
-          ) : (
+          {isDesktop ? null : (
             /* Web → Go to AIOMS exe */
             <a
               href="/download"

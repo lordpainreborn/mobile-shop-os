@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Monitor,
@@ -309,19 +310,35 @@ const stats = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
     const w = window as unknown as Record<string, unknown>;
-    setIsDesktop(
+    const desktop =
       ua.includes("electron") ||
       ua.includes("aioms-desktop") ||
       !!w.electron ||
-      !!w.__TAURI__
-    );
-  }, []);
+      !!w.__TAURI__ ||
+      !!w.__ELECTRON__;
+    setIsDesktop(desktop);
+
+    if (desktop) {
+      fetch("/api/auth/me")
+        .then((res) => {
+          if (!res.ok) throw new Error("Not authenticated");
+          return res.json();
+        })
+        .then(() => {
+          router.replace("/dashboard");
+        })
+        .catch(() => {
+          router.replace("/login");
+        });
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 overflow-hidden">

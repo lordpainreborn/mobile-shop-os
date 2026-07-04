@@ -17,14 +17,32 @@ type UserData = {
 
 const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password", "/dashboard"];
 
+function isDesktopEnv() {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent.toLowerCase();
+  const w = window as unknown as Record<string, unknown>;
+  return (
+    ua.includes("electron") ||
+    ua.includes("aioms-desktop") ||
+    !!w.electron ||
+    !!w.__TAURI__ ||
+    !!w.__ELECTRON__
+  );
+}
+
 export default function AuthShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktop, setDesktop] = useState(false);
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || (p !== "/" && pathname.startsWith(p)));
+
+  useEffect(() => {
+    setDesktop(isDesktopEnv());
+  }, []);
 
   useEffect(() => {
     if (isPublic) {
@@ -49,7 +67,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
   if (isPublic) {
     return (
       <>
-        <Navbar />
+        {!desktop && <Navbar />}
         {children}
       </>
     );
