@@ -442,7 +442,7 @@ export default function DownloadPage() {
           className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-2.5">
-            <img src="/aioms-logo.svg?v=3" alt="AIOMS" className="w-7 h-7 rounded-md" />
+            <img src="/icon.svg" alt="AIOMS" className="w-7 h-7 rounded-md" />
             <span className="font-bold text-sm">AIOMS POS</span>
           </div>
           <p className="text-xs text-slate-500">

@@ -46,7 +46,7 @@ export default function Navbar() {
       className="w-full h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-50 px-6 flex items-center justify-between"
     >
       <a href="/" className="flex items-center gap-2.5 shrink-0">
-        <img src="/aioms-logo.svg?v=3" alt="AIOMS" className="h-9 w-9 rounded-lg" />
+        <img src="/icon.svg" alt="AIOMS" className="h-9 w-9 rounded-lg" />
         <span className="text-lg font-extrabold tracking-tight text-white hidden sm:inline">
           AIOMS <span className="text-blue-400">POS</span>
         </span>

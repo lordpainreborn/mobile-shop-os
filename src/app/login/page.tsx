@@ -110,7 +110,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <img
-              src="/aioms-logo.svg?v=3"
+              src="/icon.svg"
               alt="AIOMS"
               className={`w-16 h-16 mx-auto rounded-2xl mb-4 ${
                 desktop
