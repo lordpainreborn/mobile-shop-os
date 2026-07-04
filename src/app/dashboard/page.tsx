@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Logo from "@/components/Logo";
 import {
   User,
   Mail,
@@ -48,6 +50,7 @@ const PRESET_AVATARS = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -100,6 +103,8 @@ export default function DashboardPage() {
       }
       if (data.user) setUser(data.user);
       setSaveMsg({ type: "ok", text: data.message || "Profile updated." });
+      window.dispatchEvent(new Event("profile-updated"));
+      router.refresh();
       setTimeout(() => setEditing(false), 1200);
     } catch {
       setSaveMsg({ type: "err", text: "Network error." });
@@ -149,7 +154,7 @@ export default function DashboardPage() {
       <div className="border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/icon.svg" alt="AIOMS" className="h-7 w-7 rounded-md" />
+            <Logo className="h-7 w-7 rounded-md" />
             <span className="text-sm font-bold text-slate-800">AIOMS POS</span>
             <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">v2.0</span>
           </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import Logo from "@/components/Logo";
 
 function isDesktopEnv() {
   if (typeof window === "undefined") return false;
@@ -53,8 +54,11 @@ export default function LoginPage() {
       }
 
       const role = data.user?.role;
+      const isDesktop = isDesktopEnv();
       if (role === "SUPER_ADMIN") {
         window.location.href = "/admin";
+      } else if (isDesktop) {
+        window.location.href = "/sales";
       } else {
         window.location.href = "/dashboard";
       }
@@ -109,9 +113,7 @@ export default function LoginPage() {
         >
           {/* Header */}
           <div className="text-center mb-8">
-            <img
-              src="/icon.svg"
-              alt="AIOMS"
+            <Logo
               className={`w-16 h-16 mx-auto rounded-2xl mb-4 ${
                 desktop
                   ? "shadow-lg shadow-blue-500/20"

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import Logo from "./Logo";
 import UserDropdown from "./UserDropdown";
 
 type UserData = {
@@ -26,16 +27,27 @@ export default function Navbar() {
   const [authLoaded, setAuthLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => {
-        if (!res.ok) return null;
-        return res.json();
-      })
-      .then((data) => {
-        if (data?.user) setUser(data.user);
-        setAuthLoaded(true);
-      })
-      .catch(() => setAuthLoaded(true));
+    function fetchAuth() {
+      fetch("/api/auth/me")
+        .then((res) => {
+          if (!res.ok) return null;
+          return res.json();
+        })
+        .then((data) => {
+          if (data?.user) setUser(data.user);
+          setAuthLoaded(true);
+        })
+        .catch(() => setAuthLoaded(true));
+    }
+
+    fetchAuth();
+
+    function handleProfileUpdate() {
+      fetchAuth();
+    }
+
+    window.addEventListener("profile-updated", handleProfileUpdate);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdate);
   }, []);
 
   return (
@@ -46,7 +58,7 @@ export default function Navbar() {
       className="w-full h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-50 px-6 flex items-center justify-between"
     >
       <a href="/" className="flex items-center gap-2.5 shrink-0">
-        <img src="/icon.svg" alt="AIOMS" className="h-9 w-9 rounded-lg" />
+        <Logo className="h-9 w-9 rounded-lg" />
         <span className="text-lg font-extrabold tracking-tight text-white hidden sm:inline">
           AIOMS <span className="text-blue-400">POS</span>
         </span>

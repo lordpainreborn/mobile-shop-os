@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Logo from "@/components/Logo";
 import {
   Monitor,
   ShoppingCart,
@@ -332,7 +333,7 @@ export default function Home() {
           return res.json();
         })
         .then(() => {
-          router.replace("/dashboard");
+          router.replace("/sales");
         })
         .catch(() => {
           router.replace("/login");
@@ -366,7 +367,7 @@ export default function Home() {
             transition={{ ...spring, delay: 0.05 }}
             className="mb-6"
           >
-            <img src="/icon.svg" alt="AIOMS" className="w-20 h-20 mx-auto rounded-2xl shadow-2xl shadow-blue-600/20" />
+            <Logo className="w-20 h-20 mx-auto rounded-2xl shadow-2xl shadow-blue-600/20" />
           </motion.div>
 
           <motion.div
@@ -861,7 +862,7 @@ export default function Home() {
           className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3">
-            <img src="/icon.svg" alt="AIOMS" className="w-8 h-8 rounded-lg" />
+            <Logo className="w-8 h-8 rounded-lg" />
             <span className="font-bold text-sm">AIOMS</span>
           </div>
           <p className="text-xs text-slate-500">
