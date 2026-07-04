@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -56,6 +56,7 @@ export default function DashboardPage() {
   const [editAvatar, setEditAvatar] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function fetchUser() {
     fetch("/api/auth/me")
@@ -103,6 +104,20 @@ export default function DashboardPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setSaveMsg({ type: "err", text: "File must be under 2MB." });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEditAvatar(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   }
 
   if (loading) {
@@ -320,9 +335,17 @@ export default function DashboardPage() {
                       </div>
                     )}
                     <div className="flex-1">
-                      <p className="text-xs text-slate-500 mb-1.5">Select a preset avatar:</p>
+                      <p className="text-xs text-slate-500 mb-1.5">Choose a photo:</p>
                       <div className="flex gap-2 flex-wrap">
-                        {PRESET_AVATARS.map((url) => (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition cursor-pointer"
+                        >
+                          <Camera className="w-3.5 h-3.5" />
+                          Upload File
+                        </button>
+                        {PRESET_AVATARS.slice(0, 3).map((url) => (
                           <button
                             key={url}
                             onClick={() => setEditAvatar(url)}
@@ -336,6 +359,13 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
                   <div className="flex items-center gap-2">
                     <Camera className="w-4 h-4 text-slate-400 shrink-0" />
                     <input
@@ -346,6 +376,14 @@ export default function DashboardPage() {
                       className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
                     />
                   </div>
+                  {editAvatar && (
+                    <button
+                      onClick={() => setEditAvatar("")}
+                      className="mt-2 text-xs text-red-500 hover:text-red-700 transition cursor-pointer"
+                    >
+                      Remove photo
+                    </button>
+                  )}
                 </div>
 
                 {/* Name */}
