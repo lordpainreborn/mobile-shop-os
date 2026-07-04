@@ -12,30 +12,7 @@ CRITICAL CONVERSATION RULES:
 
 Speak naturally in English or Burmese depending on the user's language. Answer as a helpful Mobile Shop OS support assistant.`;
 
-const fallbackResponses: Record<string, string> = {
-  addProduct: `Products Page Tutorial:
-1. Go to Products.
-2. Click "Add Product".
-3. Fill in product name, category, cost, selling price, and stock quantity.
-4. Save to add it to inventory.
-5. Use the edit and delete buttons to maintain product records.`,
-  repairTicket: `Repairs Page Guide:
-1. Open Repairs.
-2. Click "New Ticket".
-3. Enter customer details, device model, issue, and estimate cost.
-4. Save the ticket and advance the status as work progresses.`,
-  posGuide: `POS / Sales Guide:
-1. Open Sales.
-2. Search or scan a product.
-3. Add products to the cart and confirm quantities.
-4. Choose a payment method, then checkout to record the sale and update stock.`,
-};
-
-const queryMap: { keywords: string[]; key: keyof typeof fallbackResponses }[] = [
-  { keywords: ["product", "inventory", "stock", "add product", "edit product", "delete product"], key: "addProduct" },
-  { keywords: ["repair", "ticket", "estimate", "status", "device issue", "service"], key: "repairTicket" },
-  { keywords: ["pos", "sales", "checkout", "cart", "transaction"], key: "posGuide" },
-];
+const FALLBACK_GENERIC = `I can help with Products, Repairs, and POS/Sales in Mobile Shop OS. Please try asking a specific question about any of these features.`;
 
 function getGeminiErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -57,20 +34,8 @@ function shouldExposeGeminiDebug() {
   return process.env.NODE_ENV !== "production" || process.env.GEMINI_DEBUG_ERRORS === "true";
 }
 
-async function getFallbackResponse(message: string, debugReason?: string) {
-  const normalized = message.trim().toLowerCase();
-  let fallbackText = "";
-
-  for (const { keywords, key } of queryMap) {
-    if (keywords.some((word) => normalized.includes(word))) {
-      fallbackText = fallbackResponses[key];
-      break;
-    }
-  }
-
-  if (!fallbackText) {
-    fallbackText = `I can help with:\n- Products page guidance\n- Repairs page tickets and status updates\n- POS sales checkout workflows\n\nPlease try asking about one of these topics.`;
-  }
+function getFallbackResponse(debugReason?: string) {
+  let fallbackText = FALLBACK_GENERIC;
 
   if (debugReason && shouldExposeGeminiDebug()) {
     return `${fallbackText}\n\n[Debug] ${debugReason}`;
@@ -120,20 +85,20 @@ export async function POST(request: Request) {
     let liveInventoryContext = "";
     try {
       const inventory = await prisma.product.findMany({
-        where: { stockQuantity: { gt: 0 } },
         select: {
           name: true,
+          category: true,
           price: true,
           stockQuantity: true,
         },
-        take: 20,
+        take: 25,
       });
 
       if (inventory.length > 0) {
         const inventoryLines = inventory.map(
-          (item) => `- ${item.name}: ${item.stockQuantity} pcs, ${item.price}`
+          (item) => `- ${item.name} (${item.category}) | Price: ${item.price} | Stock: ${item.stockQuantity}`
         );
-        liveInventoryContext = `LIVE SHOP INVENTORY FROM DATABASE: ${inventory.length} items\n${inventoryLines.join("\n")}\nAlways refer strictly to this real-time stock and pricing when staff inquire about product availability.`;
+        liveInventoryContext = `REAL-TIME NEON DATABASE INVENTORY: ${inventory.length} items currently in stock.\n${inventoryLines.join("\n")}\nWhen users ask about current stock, prices, or inventory items, list them directly and accurately using THIS live data. Always refer strictly to this real-time stock and pricing.`;
       }
     } catch (dbError) {
       console.error("Live inventory query failed:", dbError);
@@ -185,21 +150,18 @@ export async function POST(request: Request) {
         }
 
         if (!answer) {
-          answer = await getFallbackResponse(
-            conversation[conversation.length - 1].content,
+          answer = getFallbackResponse(
             getGeminiErrorMessage(lastGeminiError)
           );
         }
       } catch (error) {
         console.error("Gemini API Error:", error);
-        answer = await getFallbackResponse(
-          conversation[conversation.length - 1].content,
+        answer = getFallbackResponse(
           getGeminiErrorMessage(error)
         );
       }
     } else {
-      answer = await getFallbackResponse(
-        conversation[conversation.length - 1].content,
+      answer = getFallbackResponse(
         "Missing GEMINI_API_KEY"
       );
     }

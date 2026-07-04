@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Phone } from "lucide-react";
 
 const QUICK_TOPICS = [
   { label: "Add Product Tutorial", prompt: "How do I add or edit products and manage inventory?" },
@@ -27,6 +27,7 @@ export default function HelpAssistant() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [adminOpen, setAdminOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottom = () => {
@@ -165,14 +166,52 @@ export default function HelpAssistant() {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
-        aria-label="Open AI help assistant"
-      >
-        <MessageCircle className="w-6 h-6" />
-      </button>
+      {adminOpen && (
+        <div className="w-[300px] max-w-[90vw] rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-2xl backdrop-blur-xl">
+          <div className="mb-3">
+            <p className="text-sm font-semibold text-slate-900">Contact Admin</p>
+            <p className="text-xs text-slate-600">Need urgent help? Reach out via any channel.</p>
+          </div>
+          <div className="space-y-2">
+            <a href="https://t.me/LordPainReborn" target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100">
+              <span>Telegram</span>
+              <span className="font-medium text-slate-700">@LordPainReborn</span>
+            </a>
+            <a href="tel:+959961089869" className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100">
+              <span>Phone</span>
+              <span className="font-medium text-slate-700">+959961089869</span>
+            </a>
+            <a href="viber://chat?number=%2B959798293948" className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100">
+              <span>Viber</span>
+              <span className="font-medium text-slate-700">+959798293948</span>
+            </a>
+            <a href="https://www.facebook.com/BhoneMyatPaing" target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-amber-100 bg-white px-3 py-2 text-sm text-slate-900 transition hover:bg-amber-100">
+              <span>Facebook</span>
+              <span className="font-medium text-slate-700">Bhone Myat Paing</span>
+            </a>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => { setAdminOpen((c) => !c); setOpen(false); }}
+          className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-2xl transition hover:bg-amber-400"
+        >
+          <Phone className="h-4 w-4" />
+          <span className="hidden sm:inline">Contact Admin</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { setOpen((c) => !c); setAdminOpen(false); }}
+          className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-950 text-white shadow-2xl transition hover:bg-slate-800"
+          aria-label="Open AI help assistant"
+        >
+          <MessageCircle className="w-6 h-6" />
+        </button>
+      </div>
     </div>
   );
 }
