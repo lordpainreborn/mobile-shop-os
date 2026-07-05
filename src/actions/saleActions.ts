@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { createSaleSchema } from "@/lib/validations";
 
 export type ActionResponse<T = unknown> = {
   success: boolean;
@@ -20,6 +21,10 @@ export type SaleItemInput = {
 export type CreateSaleInput = {
   items: SaleItemInput[];
   paymentMethod: string;
+  cashAmount?: number;
+  kbzPayAmount?: number;
+  cbPayAmount?: number;
+  wavePayAmount?: number;
 };
 
 type SaleWithItems = Prisma.SaleGetPayload<{ include: { items: true } }>;
@@ -33,18 +38,19 @@ export async function createSale(
   try {
     const user = await requireAuth();
 
-    if (!data.paymentMethod.trim()) {
-      return { success: false, error: "Payment method is required" };
-    }
-    if (!Array.isArray(data.items) || data.items.length === 0) {
-      return { success: false, error: "Sale items are required" };
+    const parsed = createSaleSchema.safeParse(data);
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid input",
+      };
     }
 
-    const normalizedItems = data.items.reduce<Record<string, SaleItemInput>>((acc, item) => {
+    const { items: rawItems, paymentMethod, cashAmount, kbzPayAmount, cbPayAmount, wavePayAmount } = parsed.data;
+
+    const normalizedItems = rawItems.reduce<Record<string, SaleItemInput>>((acc, item) => {
       const productId = item.productId.trim();
       if (!productId) throw new Error("Product ID is required for each item");
-      if (item.quantity <= 0) throw new Error("Quantity must be greater than zero");
-      if (item.unitPrice < 0) throw new Error("Unit price must be non-negative");
       const existing = acc[productId];
       if (!existing) {
         acc[productId] = { productId, quantity: item.quantity, unitPrice: item.unitPrice };
@@ -64,8 +70,14 @@ export async function createSale(
 
     const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
     const discount = subtotal * DISCOUNT_RATE;
-    const tax = (subtotal - discount) * TAX_RATE;
-    const totalAmount = subtotal - discount + tax;
+    const taxable = subtotal - discount;
+    const tax = taxable * TAX_RATE;
+    const totalAmount = taxable + tax;
+
+    const costTotal = items.reduce((sum, item) => {
+      return sum + item.quantity * item.unitPrice * 0.7;
+    }, 0);
+    const profit = totalAmount - costTotal;
 
     const sale = await prisma.$transaction(async (tx) => {
       const products = await tx.product.findMany({
@@ -93,7 +105,12 @@ export async function createSale(
       const createdSale = await tx.sale.create({
         data: {
           totalAmount,
-          paymentMethod: data.paymentMethod.trim(),
+          paymentMethod,
+          cashAmount: cashAmount ?? (paymentMethod === "CASH" ? totalAmount : null),
+          kbzPayAmount: kbzPayAmount ?? (paymentMethod === "KBZPAY" ? totalAmount : null),
+          cbPayAmount: cbPayAmount ?? (paymentMethod === "CBPAY" ? totalAmount : null),
+          wavePayAmount: wavePayAmount ?? (paymentMethod === "WAVE" ? totalAmount : null),
+          profit,
           shopId: user.shopId,
           items: {
             create: items.map((item) => ({
@@ -125,6 +142,7 @@ export async function createSale(
 
     revalidatePath("/sales");
     revalidatePath("/products");
+    revalidatePath("/reports");
     return { success: true, data: sale };
   } catch (error) {
     console.error("[createSale]", error);

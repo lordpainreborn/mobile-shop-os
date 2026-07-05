@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Search,
   Smartphone,
@@ -18,10 +18,14 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
+  WifiOff,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { getProducts } from '@/actions/productActions';
 import { createSale } from '@/actions/saleActions';
+import PrintVoucherModal from '@/components/PrintVoucherModal';
+import { useScanner } from '@/lib/useScanner';
+import { saveOfflineSale, getPendingSales, syncPendingSales } from '@/lib/offlineSync';
 
 type Category = 'ALL' | 'PHONE' | 'ACCESSORY' | 'PART';
 type PaymentMethod = 'CASH' | 'KBZPAY' | 'CBPAY';
@@ -50,6 +54,9 @@ export default function SalesPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showPrinter, setShowPrinter] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isOnline, setIsOnline] = useState(true);
 
   const texts = {
     title: language === 'en' ? 'Point of Sale' : 'အရောင်းစနစ် (POS)',
@@ -82,16 +89,14 @@ export default function SalesPage() {
     checkoutSuccess: language === 'en' ? 'Order completed! Voucher sent to printer.' : 'ငွေရှင်းပြီးပါပြီ! ဘောင်ချာ ပရင့်ထုတ်နေသည်။',
     loading: language === 'en' ? 'Loading products...' : 'ပစ္စည်းများ ရယူနေသည်...',
     noProducts: language === 'en' ? 'No products match your search.' : 'ရှာဖွေမှုနှင့် ကိုက်ညီသော ပစ္စည်းမရှိပါ။',
+    offline: language === 'en' ? 'Offline Mode - Sales will sync when online' : 'အော့ဖ်လိုင်း စနစ် - အွန်လိုင်းရောက်သည့်အခါ Sync လုပ်ပါမည်',
   };
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   async function loadProducts(showLoading = true) {
-    if (showLoading) {
-      setLoadingProducts(true);
-    }
-
+    if (showLoading) setLoadingProducts(true);
     const result = await getProducts();
     if (result.success && result.data) {
       setProducts(
@@ -106,17 +111,50 @@ export default function SalesPage() {
       );
     } else {
       setProducts([]);
-      setNotice({
-        type: 'error',
-        text: result.error ?? 'Unable to load products from inventory.',
-      });
     }
     setLoadingProducts(false);
   }
 
   useEffect(() => {
     loadProducts();
+    setIsOnline(navigator.onLine);
+    const handleOnline = async () => {
+      setIsOnline(true);
+      const pending = await getPendingSales();
+      const unsynced = pending.filter((s) => !s.synced);
+      setPendingCount(unsynced.length);
+      if (unsynced.length > 0) {
+        const result = await syncPendingSales();
+        if (result.synced > 0) {
+          setNotice({ type: 'success', text: `Synced ${result.synced} offline sale(s)` });
+          setPendingCount(0);
+          loadProducts(false);
+        }
+      }
+    };
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
+
+  const handleBarcodeScan = useCallback((code: string) => {
+    const found = products.find(
+      (p) => p.sku.toLowerCase() === code.toLowerCase() || p.id === code
+    );
+    if (found) {
+      addToCart(found);
+      setNotice({ type: 'success', text: `Scanned: ${found.name}` });
+      setTimeout(() => setNotice(null), 2000);
+    } else {
+      setSearchTerm(code);
+    }
+  }, [products]);
+
+  useScanner({ onScan: handleBarcodeScan });
 
   const filteredProducts = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
@@ -176,19 +214,32 @@ export default function SalesPage() {
     setCheckoutLoading(true);
     setNotice(null);
 
-    const response = await createSale({
+    const saleData = {
       paymentMethod,
       items: cart.map((item) => ({
         productId: item.id,
         quantity: item.quantity,
         unitPrice: item.price,
       })),
-    });
+    };
+
+    if (!navigator.onLine) {
+      await saveOfflineSale(saleData);
+      const pending = await getPendingSales();
+      setPendingCount(pending.filter((s) => !s.synced).length);
+      clearCart();
+      setNotice({ type: 'success', text: 'Sale saved offline. Will sync when online.' });
+      setCheckoutLoading(false);
+      return;
+    }
+
+    const response = await createSale(saleData);
 
     setCheckoutLoading(false);
     if (response.success) {
       clearCart();
       setNotice({ type: 'success', text: texts.checkoutSuccess });
+      setShowPrinter(true);
       await loadProducts(false);
       return;
     }
@@ -202,25 +253,18 @@ export default function SalesPage() {
 
   const getCategoryIcon = (category: Category | Product['category']) => {
     switch (category) {
-      case 'PHONE':
-        return Smartphone;
-      case 'ACCESSORY':
-        return Headphones;
-      case 'PART':
-        return Wrench;
-      default:
-        return Package;
+      case 'PHONE': return Smartphone;
+      case 'ACCESSORY': return Headphones;
+      case 'PART': return Wrench;
+      default: return Package;
     }
   };
 
   const getCategoryColor = (category: Product['category']) => {
     switch (category) {
-      case 'PHONE':
-        return 'bg-purple-50 text-purple-600 border-purple-100';
-      case 'ACCESSORY':
-        return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-      case 'PART':
-        return 'bg-orange-50 text-orange-600 border-orange-100';
+      case 'PHONE': return 'bg-purple-50 text-purple-600 border-purple-100';
+      case 'ACCESSORY': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      case 'PART': return 'bg-orange-50 text-orange-600 border-orange-100';
     }
   };
 
@@ -236,6 +280,14 @@ export default function SalesPage() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{texts.title}</h1>
         <p className="text-slate-500 text-sm mt-1">{texts.subtitle}</p>
       </div>
+
+      {!isOnline && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 shrink-0">
+          <WifiOff size={18} />
+          {texts.offline}
+          {pendingCount > 0 && <span className="ml-2 bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold">{pendingCount} pending</span>}
+        </div>
+      )}
 
       {notice && (
         <div
@@ -478,6 +530,17 @@ export default function SalesPage() {
           </div>
         </div>
       </div>
+
+      <PrintVoucherModal
+        isOpen={showPrinter}
+        onClose={() => setShowPrinter(false)}
+        items={cart.length > 0 ? cart : []}
+        subtotal={subtotal}
+        discount={discount}
+        tax={tax}
+        grandTotal={grandTotal}
+        paymentMethod={paymentMethod}
+      />
     </div>
   );
 }

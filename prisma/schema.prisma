@@ -33,48 +33,63 @@ enum ImeiStatus {
   RESERVED
 }
 
-model Shop {
-  id        String   @id @default(cuid())
-  name      String
-  ownerName String
-  phone     String
-  createdAt DateTime @default(now())
+enum TradeInStatus {
+  INTAKE
+  EVALUATED
+  PURCHASED
+  RESOLD
+  SCRAPPED
+}
 
-  users    User[]
-  products Product[]
-  sales    Sale[]
-  tickets  RepairTicket[]
+model Shop {
+  id              String    @id @default(cuid())
+  name            String
+  ownerName       String
+  phone           String
+  createdAt       DateTime  @default(now())
+  licenseExpiry   DateTime?
+
+  users           User[]
+  products        Product[]
+  sales           Sale[]
+  tickets         RepairTicket[]
+  tradeInItems    TradeInItem[]
+  expenses        Expense[]
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  name         String
-  role         ShopRole @default(STAFF)
-  shopId       String
-  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  createdAt    DateTime  @default(now())
-  avatarUrl    String?
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  name            String
+  role            ShopRole  @default(STAFF)
+  shopId          String
+  shop            Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  avatarUrl       String?
+  emailVerified   Boolean   @default(false)
+  verificationCode String?
 
   assignedTickets RepairTicket[] @relation("Technician")
 }
 
 model Product {
-  id            String          @id @default(cuid())
-  name          String
-  sku           String?
-  category      ProductCategory
-  price         Float
-  cost          Float
-  stockQuantity Int             @default(0)
-  shopId        String
-  shop          Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  createdAt     DateTime        @default(now())
+  id              String          @id @default(cuid())
+  name            String
+  sku             String?
+  barcode         String?
+  category        ProductCategory
+  price           Float
+  cost            Float
+  stockQuantity   Int             @default(0)
+  warrantyMonths  Int             @default(0)
+  shopId          String
+  shop            Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
 
-  imeis        IMEI[]
-  saleItems    SaleItem[]
-  repairParts  RepairPart[]
+  imeis           IMEI[]
+  saleItems       SaleItem[]
+  repairParts     RepairPart[]
 
   @@unique([shopId, sku])
 }
@@ -82,6 +97,7 @@ model Product {
 model IMEI {
   id        String     @id @default(cuid())
   imeiCode  String     @unique
+  barcode   String?
   status    ImeiStatus @default(AVAILABLE)
   productId String
   product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -93,8 +109,10 @@ model RepairTicket {
   customerPhone    String
   deviceModel      String
   issueDescription String
+  includedAccessories String?
   status           RepairStatus @default(PENDING)
   estimateCost     Float?
+  finalCost        Float?
   shopId           String
   shop             Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
@@ -116,12 +134,17 @@ model RepairPart {
 }
 
 model Sale {
-  id            String   @id @default(cuid())
-  totalAmount   Float
-  paymentMethod String
-  shopId        String
-  shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
+  id              String   @id @default(cuid())
+  totalAmount     Float
+  paymentMethod   String
+  cashAmount      Float?
+  kbzPayAmount    Float?
+  cbPayAmount     Float?
+  wavePayAmount   Float?
+  profit          Float?
+  shopId          String
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
 
   items SaleItem[]
 }
@@ -134,6 +157,33 @@ model SaleItem {
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
   unitPrice Float
+}
+
+model TradeInItem {
+  id              String        @id @default(cuid())
+  customerName    String
+  customerPhone   String?
+  deviceModel     String
+  deviceCondition String
+  imeiNumber      String?
+  buyInPrice      Float
+  resellPrice     Float?
+  status          TradeInStatus @default(INTAKE)
+  notes           String?
+  shopId          String
+  shop            Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  category    String
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 }
 
 model VerificationCode {

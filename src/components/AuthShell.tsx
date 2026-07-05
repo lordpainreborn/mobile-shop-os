@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Navbar from "@/components/Navbar";
+import BottomNav from "@/components/BottomNav";
 import { Loader2 } from "lucide-react";
 
 type UserData = {
@@ -15,7 +16,7 @@ type UserData = {
   shopId: string;
 };
 
-const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password", "/dashboard"];
+const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password", "/terms-of-service", "/privacy-policy"];
 
 function isDesktopEnv() {
   if (typeof window === "undefined") return false;
@@ -94,10 +95,11 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      <main className="lg:ml-64 flex-1 flex flex-col min-h-screen">
+      <main className="lg:ml-64 flex-1 flex flex-col min-h-screen pb-16 lg:pb-0">
         <Header onMenuClick={() => setSidebarOpen(true)} user={user} />
         <div className="p-4 sm:p-6 lg:p-8 flex-1">{children}</div>
       </main>
+      <BottomNav />
     </>
   );
 }

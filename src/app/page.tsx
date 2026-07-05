@@ -875,6 +875,12 @@ export default function Home() {
             <a href="/signup" className="hover:text-white transition">
               Sign Up
             </a>
+            <a href="/terms-of-service" className="hover:text-white transition">
+              Terms
+            </a>
+            <a href="/privacy-policy" className="hover:text-white transition">
+              Privacy
+            </a>
           </div>
         </motion.div>
       </footer>

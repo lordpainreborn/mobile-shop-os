@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Smartphone, Wrench, Receipt, Shield, X, Banknote } from "lucide-react";
+import { Home, Users, Smartphone, Wrench, Receipt, Shield, X, Banknote, RefreshCw, BarChart3, Settings } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface SidebarProps {
@@ -19,7 +19,10 @@ export default function Sidebar({ open = false, onClose, userRole }: SidebarProp
     { nameEn: "POS / Sales", nameMy: "အရောင်းကောင်တာ (POS)", href: "/sales", icon: Receipt },
     { nameEn: "Products", nameMy: "ကုန်ပစ္စည်း စာရင်း (Inventory)", href: "/products", icon: Smartphone },
     { nameEn: "Repairs", nameMy: "ပြုပြင်ရေး စာရင်း (Repairs)", href: "/repairs", icon: Wrench },
+    { nameEn: "Trade-In", nameMy: "အဟောင်းလဲလှယ်ရေး", href: "/trade-in", icon: RefreshCw },
+    { nameEn: "Warranty", nameMy: "အာမခံ စောင့်ကြည့်ရေး", href: "/warranty", icon: Shield },
     { nameEn: "Expenses", nameMy: "အသုံးစရိတ် စာရင်း (Expenses)", href: "/expenses", icon: Banknote },
+    { nameEn: "Reports", nameMy: "စာရင်းဇယား (Reports)", href: "/reports", icon: BarChart3 },
     { nameEn: "Staff", nameMy: "ဝန်ထမ်းနှင့် ဆိုင်ဆက်တင် (Settings)", href: "/staff", icon: Users },
   ];
 
@@ -74,6 +77,21 @@ export default function Sidebar({ open = false, onClose, userRole }: SidebarProp
           );
         })}
       </ul>
+
+      <div className="mt-auto pt-4 border-t border-slate-800">
+        <Link
+          href="/account"
+          onClick={onClose}
+          className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-300 ${
+            pathname === "/account"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-900/50"
+              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+          }`}
+        >
+          <Settings size={20} />
+          <span className="font-medium text-sm">{language === "en" ? "Account" : "အကောင့်"}</span>
+        </Link>
+      </div>
     </div>
   );
 }

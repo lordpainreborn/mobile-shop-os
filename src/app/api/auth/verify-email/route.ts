@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { verifyEmailSchema } from "@/lib/validations";
 import { createSession } from "@/lib/auth";
-import { loginSchema } from "@/lib/validations";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rateLimit";
 
 export async function OPTIONS() {
@@ -11,8 +10,8 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-  const rateKey = `login:${ip}`;
-  const rateLimit = checkRateLimit(rateKey, 5, 60000);
+  const rateKey = `verify:${ip}`;
+  const rateLimit = checkRateLimit(rateKey, 5, 300000);
 
   if (!rateLimit.allowed) {
     return NextResponse.json(
@@ -24,7 +23,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 
-    const parsed = loginSchema.safeParse(body);
+    const parsed = verifyEmailSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" },
@@ -32,47 +31,34 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { email, code } = parsed.data;
 
-    const user = await prisma.user.findFirst({
+    const verification = await prisma.verificationCode.findFirst({
       where: {
-        OR: [
-          { email },
-          { name: { contains: email, mode: "insensitive" } },
-        ],
+        email,
+        code,
+        type: "REGISTER",
+        expiresAt: { gt: new Date() },
       },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        passwordHash: true,
-        role: true,
-        shopId: true,
-        emailVerified: true,
-      },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!user) {
+    if (!verification) {
       return NextResponse.json(
-        { success: false, error: "Invalid email/username or password" },
-        { status: 401 }
+        { success: false, error: "Invalid or expired verification code" },
+        { status: 400 }
       );
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      return NextResponse.json(
-        { success: false, error: "Invalid email/username or password" },
-        { status: 401 }
-      );
-    }
+    const user = await prisma.user.update({
+      where: { email },
+      data: { emailVerified: true },
+      select: { id: true, email: true, name: true, role: true, shopId: true },
+    });
 
-    if (!user.emailVerified) {
-      return NextResponse.json(
-        { success: false, error: "Please verify your email first", needsVerification: true },
-        { status: 403 }
-      );
-    }
+    await prisma.verificationCode.deleteMany({
+      where: { email, type: "REGISTER" },
+    });
 
     const token = await createSession({
       id: user.id,
@@ -84,7 +70,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Login successful",
+      message: "Email verified successfully",
       token,
       user: {
         id: user.id,
@@ -95,9 +81,9 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("[login]", error);
+    console.error("[verify-email]", error);
     return NextResponse.json(
-      { success: false, error: "Login failed" },
+      { success: false, error: "Verification failed" },
       { status: 500 }
     );
   }
