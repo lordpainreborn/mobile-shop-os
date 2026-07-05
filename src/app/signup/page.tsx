@@ -5,8 +5,75 @@ import { useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, CheckCircle2, Info, Smartphone, Shield, Zap, Globe } from "lucide-react";
 import { sendSignupOTP, verifySignupOTP } from "@/actions/signupActions";
 import { useLanguage } from "@/context/LanguageContext";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  GlowCard,
+  FloatingBlob,
+  MaskRevealText,
+  StaggeredInput,
+  LiquidButton,
+  AnimatedGroup,
+  AnimatedItem,
+} from "@/components/MotionPrimitives";
 
 type Step = "form" | "verify";
+
+function AnimatedInput({
+  label,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  required,
+  autoFocus,
+  maxLength,
+}: {
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  required?: boolean;
+  autoFocus?: boolean;
+  maxLength?: number;
+}) {
+  const [focused, setFocused] = useState(false);
+  const isActive = focused || value.length > 0;
+
+  return (
+    <div className="relative group">
+      <motion.label
+        className={`absolute left-4 transition-colors duration-300 pointer-events-none z-10 ${
+          isActive
+            ? "top-2 text-[10px] font-semibold tracking-wide"
+            : "top-3.5 text-sm"
+        } ${isActive ? (focused ? "text-blue-500" : "text-gray-400") : "text-gray-400"}`}
+      >
+        {label}
+      </motion.label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={focused ? placeholder : ""}
+        required={required}
+        autoFocus={autoFocus}
+        maxLength={maxLength}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        className={`w-full pt-7 pb-2.5 px-4 rounded-xl border text-sm outline-none transition-all duration-300 ${
+          type === "text" && maxLength === 6
+            ? "text-center text-2xl font-mono font-bold tracking-[0.3em]"
+            : ""
+        } border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 ${
+          focused
+            ? "border-blue-400 ring-2 ring-blue-100 bg-white shadow-[0_0_20px_-5px_rgba(59,130,246,0.12)]"
+            : "hover:border-gray-300"
+        }`}
+      />
+    </div>
+  );
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -26,14 +93,11 @@ export default function SignupPage() {
     setError("");
     setFallbackCode(null);
     setLoading(true);
-
     try {
       const result = await sendSignupOTP({ shopName, ownerName, email, password });
       if (result.success) {
         setStep("verify");
-        if (result.fallbackCode) {
-          setFallbackCode(result.fallbackCode);
-        }
+        if (result.fallbackCode) setFallbackCode(result.fallbackCode);
       } else {
         setError(result.error || "Failed to send verification code");
       }
@@ -48,7 +112,6 @@ export default function SignupPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const result = await verifySignupOTP({ shopName, ownerName, email, password, code });
       if (result.success) {
@@ -68,56 +131,74 @@ export default function SignupPage() {
     <div className="fixed inset-0 flex flex-col lg:flex-row">
       {/* Left Panel — Blue Marketing */}
       <div className="lg:w-[55%] bg-blue-600 p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden">
-        {/* Ambient blobs */}
-        <div className="absolute top-[-80px] left-[-80px] w-[300px] h-[300px] bg-blue-400/30 rounded-full blur-[80px]" />
-        <div className="absolute bottom-[-60px] right-[-60px] w-[250px] h-[250px] bg-indigo-500/30 rounded-full blur-[80px]" />
+        <FloatingBlob className="absolute top-[-80px] left-[-80px] w-[300px] h-[300px] bg-blue-400/30 rounded-full blur-[80px]" delay={0} />
+        <FloatingBlob className="absolute bottom-[-60px] right-[-60px] w-[250px] h-[250px] bg-indigo-500/30 rounded-full blur-[80px]" delay={5} />
 
         <div className="relative z-10">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-12 lg:mb-20">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">AIOMS</span>
-          </div>
+          <AnimatedGroup className="mb-12 lg:mb-20">
+            <AnimatedItem>
+              <div className="flex items-center gap-3">
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center"
+                >
+                  <Smartphone className="w-5 h-5 text-white" />
+                </motion.div>
+                <span className="text-xl font-bold text-white">AIOMS</span>
+              </div>
+            </AnimatedItem>
+          </AnimatedGroup>
 
-          {/* Marketing Content */}
           <div className="max-w-md">
-            <p className="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-4">
-              AIOMS v2.0
-            </p>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6">
-              {language === "en" ? (
-                <>Start creating<br />your shop account</>
-              ) : (
-                <>သင့်ဖုန်းဆိုင် အကောင့်သစ်<br />ဖန်တီးလိုက်ပါ</>
-              )}
-            </h1>
-            <p className="text-blue-100 text-base lg:text-lg leading-relaxed mb-10">
-              {language === "en"
-                ? "All-in-one POS system for mobile shops — sales, repairs, inventory, and staff management."
-                : "ဖုန်းဆိုင်လုပ်ငန်းများအတွက် Windows PC Application နှင့် Cloud Web Portal တစ်ခုတည်းတွင် အရောင်း၊ ပြင်ဆင်ရေး၊ စတော့၊ ဝန်ထမ်း စီမံခန့်ခွဲပါ။"}
-            </p>
+            <AnimatedGroup>
+              <AnimatedItem>
+                <p className="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-4">
+                  AIOMS v2.0
+                </p>
+              </AnimatedItem>
+              <AnimatedItem>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6">
+                  <MaskRevealText
+                    text={language === "en" ? "Start creating" : "သင့်ဖုန်းဆိုင်"}
+                    delay={0.1}
+                  />
+                  <br />
+                  <MaskRevealText
+                    text={language === "en" ? "your shop account" : "အကောင့်သစ် ဖန်တီးလိုက်ပါ"}
+                    delay={0.25}
+                  />
+                </h1>
+              </AnimatedItem>
+              <AnimatedItem>
+                <p className="text-blue-100 text-base lg:text-lg leading-relaxed mb-10">
+                  {language === "en"
+                    ? "All-in-one POS system for mobile shops — sales, repairs, inventory, and staff management."
+                    : "ဖုန်းဆိုင်လုပ်ငန်းများအတွက် Windows PC Application နှင့် Cloud Web Portal တစ်ခုတည်းတွင် အရောင်း၊ ပြင်ဆင်ရေး၊ စတော့၊ ဝန်ထမ်း စီမံခန့်ခွဲပါ။"}
+                </p>
+              </AnimatedItem>
+            </AnimatedGroup>
 
-            {/* Feature list */}
-            <div className="space-y-4">
+            <AnimatedGroup className="space-y-4" delay={0.4}>
               {[
                 { icon: <Shield className="w-5 h-5" />, text: language === "en" ? "Multi-Shop Isolation & Security" : "ဆိုင်တစ်ဆိုင်ချင်စီ လုံခြုံမှု" },
                 { icon: <Zap className="w-5 h-5" />, text: language === "en" ? "Offline / Online Data Sync" : "အော့ဖ်လိုင်း / အွန်လိုင်း ဒေတာ Sync" },
                 { icon: <Globe className="w-5 h-5" />, text: language === "en" ? "Cloud Web Portal Access" : "Cloud Web Portal ဝင်ရောက်ခွင့်" },
               ].map((f, i) => (
-                <div key={i} className="flex items-center gap-3 text-blue-100">
-                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                    {f.icon}
+                <AnimatedItem key={i}>
+                  <div className="flex items-center gap-3 text-blue-100">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                      {f.icon}
+                    </div>
+                    <span className="text-sm">{f.text}</span>
                   </div>
-                  <span className="text-sm">{f.text}</span>
-                </div>
+                </AnimatedItem>
               ))}
-            </div>
+            </AnimatedGroup>
           </div>
         </div>
 
-        {/* Footer link */}
         <div className="relative z-10 mt-12 lg:mt-0">
           <a href="/login" className="text-blue-200 text-sm hover:text-white transition">
             Already have an account? Sign In →
@@ -128,178 +209,197 @@ export default function SignupPage() {
       {/* Right Panel — White Form */}
       <div className="lg:w-[45%] bg-white flex items-center justify-center p-8 sm:p-12 overflow-auto">
         <div className="w-full max-w-[400px]">
-          {/* Back button for verify step */}
-          {step === "verify" && (
-            <button
-              onClick={() => { setStep("form"); setError(""); setCode(""); setFallbackCode(null); }}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {language === "en" ? "Back to form" : "နောက်သို့"}
-            </button>
-          )}
-
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">
-            {step === "form"
-              ? (language === "en" ? "Create account" : "အကောင့်ဖန်တီးရန်")
-              : (language === "en" ? "Verify your email" : "Email စစ်ဆေးရန်")}
-          </h2>
-          <p className="text-sm text-gray-500 mb-8">
-            {step === "form"
-              ? (language === "en" ? "Fill in the details below to get started." : "အောက်ပါအချက်အလက်များ ဖြည့်ပါ။")
-              : (language === "en" ? "Enter the 6-digit code sent to your email." : "သင့် Email သို့ ပို့ထားသော ကုဒ် ထည့်ပါ။")}
-          </p>
-
-          {/* Success banner */}
-          {step === "verify" && (
-            <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-blue-50 border border-blue-100">
-              <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />
-              <p className="text-sm text-blue-700">
-                {language === "en" ? "Code sent to" : "ကုဒ်ပို့ပြီး"} <span className="font-semibold">{email}</span>
-              </p>
-            </div>
-          )}
-
-          {/* Fallback code notice */}
-          {fallbackCode && (
-            <div className="mb-6 p-3 rounded-xl bg-amber-50 border border-amber-200">
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-amber-700 font-medium">Dev Mode — Email skipped</p>
-                  <p className="text-xs text-amber-500 mt-1">Your verification code:</p>
-                  <p className="text-xl font-mono font-bold text-amber-600 tracking-[0.2em] mt-1">
-                    {fallbackCode}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={step === "form" ? handleSendOTP : handleVerifyOTP} className="space-y-5">
-            {step === "form" && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "Shop Name" : "ဆိုင်အမည်"}</label>
-                  <input
-                    type="text"
-                    value={shopName}
-                    onChange={(e) => setShopName(e.target.value)}
-                    placeholder="e.g. Yangon Mobile Hub"
-                    required
-                    autoFocus
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder-gray-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "Your Name" : "သင့်အမည်"}</label>
-                  <input
-                    type="text"
-                    value={ownerName}
-                    onChange={(e) => setOwnerName(e.target.value)}
-                    placeholder="e.g. Aung Min"
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder-gray-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "Email address" : "Email လိပ်စာ"}</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@shop.com"
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder-gray-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "Password" : "စကားဝှက်"}</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min. 6 characters"
-                    required
-                    minLength={6}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm placeholder-gray-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white"
-                  />
-                </div>
-              </>
-            )}
-
+          <AnimatePresence mode="wait">
             {step === "verify" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{language === "en" ? "Verification Code" : "အတည်ပြုကုဒ်"}</label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="Enter 6-digit code"
-                  required
-                  maxLength={6}
-                  autoFocus
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-center text-2xl font-mono font-bold text-gray-900 tracking-[0.3em] placeholder-gray-400 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white"
-                />
-              </div>
+              <motion.button
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                onClick={() => { setStep("form"); setError(""); setCode(""); setFallbackCode(null); }}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {language === "en" ? "Back to form" : "နောက်သို့"}
+              </motion.button>
             )}
+          </AnimatePresence>
 
-            {error && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 font-medium">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+          <GlowCard className="bg-white border-0 shadow-none p-0">
+            <AnimatedGroup className="mb-8">
+              <AnimatedItem>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                  <MaskRevealText
+                    text={
+                      step === "form"
+                        ? (language === "en" ? "Create account" : "အကောင့်ဖန်တီးရန်")
+                        : (language === "en" ? "Verify your email" : "Email စစ်ဆေးရန်")
+                    }
+                  />
+                </h2>
+              </AnimatedItem>
+              <AnimatedItem>
+                <p className="text-sm text-gray-500">
                   {step === "form"
-                    ? (language === "en" ? "Sending code..." : "ကုဒ်ပို့နေသည်...")
-                    : (language === "en" ? "Verifying..." : "စစ်ဆေးနေသည်...")}
-                </>
-              ) : step === "form" ? (
-                language === "en" ? "Send OTP Code" : "OTP ကုဒ်ပို့ရန်"
-              ) : (
-                language === "en" ? "Verify & Create Account" : "အကောင့်ဖန်တီးရန်"
+                    ? (language === "en" ? "Fill in the details below to get started." : "အောက်ပါအချက်အလက်များ ဖြည့်ပါ။")
+                    : (language === "en" ? "Enter the 6-digit code sent to your email." : "သင့် Email သို့ ပို့ထားသော ကုဒ် ထည့်ပါ။")}
+                </p>
+              </AnimatedItem>
+            </AnimatedGroup>
+
+            <AnimatePresence mode="wait">
+              {step === "verify" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-blue-50 border border-blue-100"
+                >
+                  <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />
+                  <p className="text-sm text-blue-700">
+                    {language === "en" ? "Code sent to" : "ကုဒ်ပို့ပြီး"} <span className="font-semibold">{email}</span>
+                  </p>
+                </motion.div>
               )}
-            </button>
-          </form>
+            </AnimatePresence>
 
-          <p className="text-center text-gray-500 text-sm mt-8">
-            {language === "en" ? "Already have an account?" : "အကောင့်ရှိပြီးသားလား?"}{" "}
-            <a href="/login" className="text-blue-600 font-semibold hover:underline">
-              {language === "en" ? "Log in" : "ဝင်ရန်"}
-            </a>
-          </p>
+            {fallbackCode && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6 p-3 rounded-xl bg-amber-50 border border-amber-200"
+              >
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-amber-700 font-medium">Dev Mode — Email skipped</p>
+                    <p className="text-xs text-amber-500 mt-1">Your verification code:</p>
+                    <p className="text-xl font-mono font-bold text-amber-600 tracking-[0.2em] mt-1">
+                      {fallbackCode}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-          {/* Language Toggle */}
-          <div className="flex items-center justify-center gap-2 mt-8 pt-6 border-t border-gray-100">
-            <button
-              onClick={() => language === "my" && toggleLanguage()}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                language === "en"
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
-            >
-              English
-            </button>
-            <button
-              onClick={() => language === "en" && toggleLanguage()}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                language === "my"
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
-            >
-              မြန်မာ
-            </button>
-          </div>
+            <form onSubmit={step === "form" ? handleSendOTP : handleVerifyOTP} className="space-y-5">
+              {step === "form" && (
+                <>
+                  <StaggeredInput index={0}>
+                    <AnimatedInput
+                      label={language === "en" ? "Shop Name" : "ဆိုင်အမည်"}
+                      value={shopName}
+                      onChange={(e) => setShopName(e.target.value)}
+                      placeholder="e.g. Yangon Mobile Hub"
+                      required
+                      autoFocus
+                    />
+                  </StaggeredInput>
+                  <StaggeredInput index={1}>
+                    <AnimatedInput
+                      label={language === "en" ? "Your Name" : "သင့်အမည်"}
+                      value={ownerName}
+                      onChange={(e) => setOwnerName(e.target.value)}
+                      placeholder="e.g. Aung Min"
+                      required
+                    />
+                  </StaggeredInput>
+                  <StaggeredInput index={2}>
+                    <AnimatedInput
+                      label={language === "en" ? "Email address" : "Email လိပ်စာ"}
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@shop.com"
+                      required
+                    />
+                  </StaggeredInput>
+                  <StaggeredInput index={3}>
+                    <AnimatedInput
+                      label={language === "en" ? "Password" : "စကားဝှက်"}
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min. 6 characters"
+                      required
+                    />
+                  </StaggeredInput>
+                </>
+              )}
+
+              {step === "verify" && (
+                <StaggeredInput index={0}>
+                  <AnimatedInput
+                    label={language === "en" ? "Verification Code" : "အတည်ပြုကုဒ်"}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="Enter 6-digit code"
+                    required
+                    maxLength={6}
+                    autoFocus
+                  />
+                </StaggeredInput>
+              )}
+
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: "auto" }}
+                    exit={{ opacity: 0, y: -8, height: 0 }}
+                    className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 font-medium overflow-hidden"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <StaggeredInput index={step === "form" ? 4 : 1}>
+                <LiquidButton
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {step === "form"
+                        ? (language === "en" ? "Sending code..." : "ကုဒ်ပို့နေသည်...")
+                        : (language === "en" ? "Verifying..." : "စစ်ဆေးနေသည်...")}
+                    </>
+                  ) : step === "form" ? (
+                    language === "en" ? "Send OTP Code" : "OTP ကုဒ်ပို့ရန်"
+                  ) : (
+                    language === "en" ? "Verify & Create Account" : "အကောင့်ဖန်တီးရန်"
+                  )}
+                </LiquidButton>
+              </StaggeredInput>
+            </form>
+
+            <p className="text-center text-gray-500 text-sm mt-8">
+              {language === "en" ? "Already have an account?" : "အကောင့်ရှိပြီးသားလား?"}{" "}
+              <a href="/login" className="text-blue-600 font-semibold hover:underline">
+                {language === "en" ? "Log in" : "ဝင်ရန်"}
+              </a>
+            </p>
+
+            <div className="flex items-center justify-center gap-2 mt-8 pt-6 border-t border-gray-100">
+              <button
+                onClick={() => language === "my" && toggleLanguage()}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  language === "en" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => language === "en" && toggleLanguage()}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  language === "my" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                မြန်မာ
+              </button>
+            </div>
+          </GlowCard>
         </div>
       </div>
     </div>

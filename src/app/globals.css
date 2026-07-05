@@ -132,3 +132,72 @@
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Premium input focus transitions */
+input:focus,
+textarea:focus,
+select:focus {
+  transition: border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Floating label animation support */
+.float-label-group {
+  position: relative;
+}
+
+.float-label-group label {
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: left center;
+}
+
+/* Smooth page transitions */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Lenis smooth scroll overrides */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+/* Premium card hover effects */
+.glow-card {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glow-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Electric blue focus ring animation */
+@keyframes focusRing {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+  100% { box-shadow: 0 0 20px -5px rgba(59, 130, 246, 0.12); }
+}
+
+input:focus {
+  animation: focusRing 0.3s ease-out forwards;
+}
+
+/* Mask reveal text animation base */
+.mask-reveal {
+  overflow: hidden;
+  display: inline-block;
+}
+
+.mask-reveal span {
+  display: inline-block;
+}
