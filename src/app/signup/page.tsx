@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, CheckCircle2, Info, Smartphone, Shield, Zap, Globe } from "lucide-react";
-import { sendSignupOTP, verifySignupOTP } from "@/actions/signupActions";
+import { sendSignupOTP, verifySignupOTP, resendSignupOTP } from "@/actions/signupActions";
 import { useLanguage } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -87,6 +87,33 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fallbackCode, setFallbackCode] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const handleResendOTP = async () => {
+    if (resending || resendCooldown > 0) return;
+    setError("");
+    setResending(true);
+    try {
+      const result = await resendSignupOTP(email);
+      if (result.success) {
+        if (result.fallbackCode) setFallbackCode(result.fallbackCode);
+        setResendCooldown(30);
+        const timer = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) { clearInterval(timer); return 0; }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        setError(result.error || "Failed to resend code");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -326,17 +353,33 @@ export default function SignupPage() {
               )}
 
               {step === "verify" && (
-                <StaggeredInput index={0}>
-                  <AnimatedInput
-                    label={language === "en" ? "Verification Code" : "အတည်ပြုကုဒ်"}
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="Enter 6-digit code"
-                    required
-                    maxLength={6}
-                    autoFocus
-                  />
-                </StaggeredInput>
+                <>
+                  <StaggeredInput index={0}>
+                    <AnimatedInput
+                      label={language === "en" ? "Verification Code" : "အတည်ပြုကုဒ်"}
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="Enter 6-digit code"
+                      required
+                      maxLength={6}
+                      autoFocus
+                    />
+                  </StaggeredInput>
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={handleResendOTP}
+                      disabled={resending || resendCooldown > 0}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {resending
+                        ? (language === "en" ? "Resending..." : "ပြန်ပို့နေသည်...")
+                        : resendCooldown > 0
+                        ? (language === "en" ? `Resend in ${resendCooldown}s` : `${resendCooldown}စက္ကန့်စောင့်ပါ`)
+                        : (language === "en" ? "Resend verification code" : "အတည်ပြုကုဒ် ပြန်ပို့ရန်")}
+                    </button>
+                  </div>
+                </>
               )}
 
               <AnimatePresence>

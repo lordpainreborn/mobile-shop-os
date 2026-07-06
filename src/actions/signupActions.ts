@@ -77,6 +77,48 @@ export async function sendSignupOTP(data: {
   }
 }
 
+export async function resendSignupOTP(
+  email: string
+): Promise<{ success: boolean; fallbackCode?: string; devMode?: boolean; error?: string }> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return { success: false, error: "Email is required" };
+  }
+
+  try {
+    await prisma.verificationCode.deleteMany({
+      where: { email: normalizedEmail, type: "SIGNUP" },
+    });
+
+    const code = generateOTP();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await prisma.verificationCode.create({
+      data: { email: normalizedEmail, code, type: "SIGNUP", expiresAt },
+    });
+
+    const result = await sendVerificationEmail(normalizedEmail, code, "SIGNUP");
+
+    return {
+      success: true,
+      fallbackCode: result.fallbackCode,
+      devMode: result.devMode,
+    };
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+    console.error("AUTH API CRASH DETECTED [resendSignupOTP]:", {
+      message: err?.message,
+      stack: err?.stack,
+      code: err?.code,
+    });
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      return { success: false, error: `Database error: ${err.message}` };
+    }
+    return { success: false, error: err?.message || "Server error. Please try again." };
+  }
+}
+
 export async function verifySignupOTP(data: {
   shopName: string;
   ownerName: string;
