@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "mshop_session";
 const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "mobile-shop-os-dev-secret-change-in-production"
+  process.env.NEXTAUTH_SECRET ?? process.env.JWT_SECRET ?? "mobile-shop-os-dev-secret-change-in-production"
 );
 
 export type SessionUser = {

@@ -1,30 +1,32 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-function getTransporter() {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
+const FROM_EMAIL = "AIOMS <onboarding@resend.dev>";
 
-  if (!user || !pass) {
+export function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
     return null;
   }
-
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: { user, pass },
-  });
+  return new Resend(apiKey);
 }
-
-const transporter = getTransporter();
-
-const FROM_EMAIL = process.env.EMAIL_FROM || "AIOMS <noreply@aioms.com>";
 
 export async function sendVerificationEmail(
   email: string,
   code: string,
   type: "SIGNUP" | "RESET"
 ): Promise<{ success: boolean; fallbackCode?: string; devMode?: boolean }> {
+  const resend = getResendClient();
+
+  if (!resend) {
+    console.log("=============================================");
+    console.log("RESEND_API_KEY NOT CONFIGURED — DEV FALLBACK MODE");
+    console.log("OTP CODE:", code);
+    console.log("Email:", email, "| Type:", type);
+    console.log("Set RESEND_API_KEY in .env / Vercel env vars for live email");
+    console.log("=============================================");
+    return { success: true, fallbackCode: code, devMode: true };
+  }
+
   const subject =
     type === "SIGNUP"
       ? "Verify your email - AIOMS"
@@ -38,18 +40,8 @@ export async function sendVerificationEmail(
       ? "Use the code below to verify your email and create your account."
       : "Use the code below to reset your password. This code will expire in 15 minutes.";
 
-  if (!transporter) {
-    console.log("=============================================");
-    console.log("EMAIL SMTP NOT CONFIGURED — DEV FALLBACK MODE");
-    console.log("OTP CODE:", code);
-    console.log("Email:", email, "| Type:", type);
-    console.log("Set EMAIL_USER & EMAIL_PASS in .env for live email");
-    console.log("=============================================");
-    return { success: true, fallbackCode: code, devMode: true };
-  }
-
   try {
-    await transporter.sendMail({
+    await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
       subject,
@@ -84,7 +76,7 @@ export async function sendVerificationEmail(
 
     return { success: true };
   } catch (error) {
-    console.error("[sendVerificationEmail] SMTP error:", error);
+    console.error("[sendVerificationEmail] Resend API error:", error);
     console.log("=============================================");
     console.log("FALLBACK OTP CODE (email delivery failed):", code);
     console.log("Email:", email, "| Type:", type);
