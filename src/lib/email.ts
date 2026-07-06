@@ -35,8 +35,14 @@ function sendMail(
         console.error("SMTP Send Error:", err);
         reject(err);
       } else {
-        console.log("EMAIL SENT SUCCESSFULLY:", info.messageId);
-        resolve(info);
+        if (info.rejected && info.rejected.length > 0) {
+          const rejectErr = new Error(`Email delivery rejected by server for: ${info.rejected.join(', ')}`);
+          console.error("SMTP Rejected:", rejectErr.message);
+          reject(rejectErr);
+        } else {
+          console.log("EMAIL DELIVERED SUCCESSFULLY:", info.messageId);
+          resolve(info);
+        }
       }
     });
   });
