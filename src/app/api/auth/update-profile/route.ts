@@ -15,10 +15,11 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 
     const name = body?.name !== undefined ? String(body.name).trim() : undefined;
-    const shopName = body?.shopName !== undefined ? String(body.shopName).trim() : undefined;
-    const avatarUrl = body?.avatarUrl !== undefined ? String(body.avatarUrl).trim() : undefined;
+    const shopName = body?.shopName !== undefined && body?.shopName !== null ? String(body.shopName).trim() : undefined;
+    const rawAvatar = body?.avatarUrl;
+    const avatarUrl = rawAvatar !== undefined && rawAvatar !== null ? String(rawAvatar).trim() : rawAvatar;
 
-    const updateData: Record<string, string> = {};
+    const updateData: Record<string, string | null> = {};
     if (name !== undefined) updateData.name = name;
     if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
 
@@ -28,23 +29,16 @@ export async function POST(request: Request) {
           where: { id: authUser.shopId },
           data: { name: shopName },
         });
-      } catch { /* shop name update is best-effort */ }
+      } catch (e) {
+        console.error("[update-profile] shop name update failed:", e);
+      }
     }
 
     if (Object.keys(updateData).length > 0) {
-      try {
-        await prisma.user.update({
-          where: { id: authUser.id },
-          data: updateData,
-        });
-      } catch {
-        if (updateData.name) {
-          await prisma.user.update({
-            where: { id: authUser.id },
-            data: { name: updateData.name },
-          });
-        }
-      }
+      await prisma.user.update({
+        where: { id: authUser.id },
+        data: updateData,
+      });
     }
 
     const updatedUser = await prisma.user.findUnique({

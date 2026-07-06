@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { createTradeInSchema } from "@/lib/validations";
+import { z } from "zod";
+
+const updateTradeInSchema = z.object({
+  status: z.enum(["INTAKE", "EVALUATED", "PURCHASED", "RESOLD", "SCRAPPED"]).optional(),
+  resellPrice: z.number().nonnegative().optional(),
+  deviceCondition: z.string().max(500).trim().optional(),
+  notes: z.string().max(500).trim().optional(),
+});
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 200 });
@@ -62,9 +70,17 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: "Item ID is required" }, { status: 400 });
     }
 
+    const parsed = updateTradeInSchema.safeParse(updateData);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" },
+        { status: 400 }
+      );
+    }
+
     const item = await prisma.tradeInItem.updateMany({
       where: { id, shopId: user.shopId },
-      data: updateData,
+      data: parsed.data,
     });
 
     return NextResponse.json({ success: true, data: item });

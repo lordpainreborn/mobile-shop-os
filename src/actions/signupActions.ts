@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
 import { createSession } from "@/lib/auth";
@@ -14,7 +15,7 @@ export async function sendSignupOTP(data: {
   ownerName: string;
   email: string;
   password: string;
-}): Promise<{ success: boolean; fallbackCode?: string; error?: string }> {
+}): Promise<{ success: boolean; fallbackCode?: string; devMode?: boolean; error?: string; code?: string }> {
   const { shopName, ownerName, email, password } = data;
 
   if (!shopName.trim() || !ownerName.trim() || !email.trim() || !password.trim()) {
@@ -57,10 +58,22 @@ export async function sendSignupOTP(data: {
     return {
       success: true,
       fallbackCode: result.fallbackCode,
+      devMode: result.devMode,
     };
-  } catch (error) {
-    console.error("[sendSignupOTP] Server error:", error);
-    return { success: false, error: "Server error. Please try again." };
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+    console.error("AUTH API CRASH DETECTED [sendSignupOTP]:", {
+      message: err?.message,
+      stack: err?.stack,
+      code: err?.code,
+    });
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P1001") {
+        return { success: false, error: "Database connection failed. Check DATABASE_URL." };
+      }
+      return { success: false, error: `Database error: ${err.message}`, code: err.code };
+    }
+    return { success: false, error: err?.message || "Server error. Please try again." };
   }
 }
 
@@ -70,7 +83,7 @@ export async function verifySignupOTP(data: {
   email: string;
   password: string;
   code: string;
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{ success: boolean; error?: string; code?: string }> {
   const { shopName, ownerName, email, password, code } = data;
 
   if (!code.trim()) {
@@ -129,8 +142,19 @@ export async function verifySignupOTP(data: {
     });
 
     return { success: true };
-  } catch (error) {
-    console.error("[verifySignupOTP] Server error:", error);
-    return { success: false, error: "Server error. Please try again." };
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+    console.error("AUTH API CRASH DETECTED [verifySignupOTP]:", {
+      message: err?.message,
+      stack: err?.stack,
+      code: err?.code,
+    });
+    if (err instanceof Error && err.message === "UNAUTHORIZED") {
+      return { success: false, error: "Authentication failed. Please try signing up again." };
+    }
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      return { success: false, error: `Database error: ${err.message}`, code: err.code };
+    }
+    return { success: false, error: err?.message || "Server error. Please try again." };
   }
 }

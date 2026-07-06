@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { registerSchema } from "@/lib/validations";
-import { checkRateLimit, getRateLimitHeaders } from "@/lib/rateLimit";
 import { sendVerificationEmail } from "@/lib/email";
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/rateLimit";
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -24,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-    const rateKey = `register:${ip}`;
+    const rateKey = `send-otp:${ip}`;
     const rateLimit = checkRateLimit(rateKey, 3, 300000);
 
     if (!rateLimit.allowed) {
@@ -36,64 +34,46 @@ export async function POST(request: Request) {
 
     const raw = await request.json().catch(() => ({}));
     const body = raw as Record<string, unknown>;
+    const email = String(body?.email ?? "").trim().toLowerCase();
 
-    const parsed = registerSchema.safeParse(body);
-    if (!parsed.success) {
+    if (!email) {
       return NextResponse.json(
-        { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" },
+        { success: false, error: "Email is required" },
         { status: 400 }
       );
     }
 
-    const { shopName, ownerName, email, password, phone } = parsed.data;
-
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
       return NextResponse.json(
-        { success: false, error: "Email already registered" },
+        { success: false, error: "An account with this email already exists" },
         { status: 409 }
       );
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    const shop = await prisma.shop.create({
-      data: {
-        name: shopName,
-        ownerName,
-        phone,
-        users: {
-          create: {
-            email,
-            passwordHash,
-            name: ownerName,
-            role: "SHOP_OWNER",
-            emailVerified: false,
-          },
-        },
-      },
-      include: { users: { select: { id: true } } },
+    await prisma.verificationCode.deleteMany({
+      where: { email, type: "SIGNUP" },
     });
 
     const code = generateOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     await prisma.verificationCode.create({
-      data: { email, code, type: "REGISTER", expiresAt },
+      data: { email, code, type: "SIGNUP", expiresAt },
     });
 
-    const emailResult = await sendVerificationEmail(email, code, "SIGNUP");
+    const result = await sendVerificationEmail(email, code, "SIGNUP");
 
     return NextResponse.json({
       success: true,
       message: "Verification code sent to your email",
       email,
-      fallbackCode: emailResult.fallbackCode,
-      devMode: emailResult.devMode,
+      fallbackCode: result.fallbackCode,
+      devMode: result.devMode,
     });
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
-    console.error("AUTH API CRASH DETECTED [register]:", {
+    console.error("AUTH API CRASH DETECTED [send-otp]:", {
       message: err?.message,
       stack: err?.stack,
       code: err?.code,
@@ -105,7 +85,7 @@ export async function POST(request: Request) {
       );
     }
     return NextResponse.json(
-      { success: false, error: err?.message || "Registration failed due to an unexpected error", code: err?.code },
+      { success: false, error: err?.message || "Internal Database/Auth Error", code: err?.code },
       { status: 500 }
     );
   }

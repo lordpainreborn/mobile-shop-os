@@ -9,7 +9,7 @@ const SECRET = new TextEncoder().encode(
 const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/api/auth/login", "/api/auth/logout", "/api/auth/me"];
 const LEGAL_PATHS = ["/terms-of-service", "/privacy-policy"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
