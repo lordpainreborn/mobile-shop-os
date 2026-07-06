@@ -5,8 +5,33 @@ export function getTransporter(): nodemailer.Transporter | null {
   const pass = process.env.EMAIL_PASS;
   if (!user || !pass) return null;
   return nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: { user, pass },
+  });
+}
+
+function waitForSendMail(
+  transporter: nodemailer.Transporter,
+  mailOptions: nodemailer.SendMailOptions
+): Promise<nodemailer.SentMessageInfo> {
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) reject(err);
+      else resolve(info);
+    });
+  });
+}
+
+function waitForVerify(
+  transporter: nodemailer.Transporter
+): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    transporter.verify((error, success) => {
+      if (error) reject(error);
+      else resolve(success);
+    });
   });
 }
 
@@ -18,10 +43,12 @@ export async function sendVerificationEmail(
   const transporter = getTransporter();
   const sender = process.env.EMAIL_USER;
 
+  console.log("SENDING OTP CODE:", code);
+
   if (!transporter || !sender) {
     console.log("=============================================");
     console.log("GMAIL SMTP NOT CONFIGURED — DEV FALLBACK MODE");
-    console.log("SENDING OTP CODE:", code);
+    console.log("OTP CODE:", code);
     console.log("Email:", email, "| Type:", type);
     console.log("Set EMAIL_USER & EMAIL_PASS in .env for live email");
     console.log("=============================================");
@@ -39,12 +66,13 @@ export async function sendVerificationEmail(
   const body =
     type === "SIGNUP"
       ? "Use the code below to verify your email and create your account."
-      : "Use the code below to reset your password. This code will expire in 15 minutes.";
+      : "Use the code below to reset your password. This code will expire in 10 minutes.";
 
   try {
-    console.log("SENDING OTP CODE:", code);
+    await waitForVerify(transporter);
+    console.log("[sendVerificationEmail] SMTP connection verified");
 
-    await transporter.sendMail({
+    await waitForSendMail(transporter, {
       from: `"AIOMS POS" <${sender}>`,
       to: email,
       subject,
@@ -67,7 +95,7 @@ export async function sendVerificationEmail(
         <p style="color:#94a3b8;font-size:12px;margin:0 0 8px;text-transform:uppercase;letter-spacing:2px;">Your Verification Code</p>
         <p style="color:#0f172a;font-size:32px;font-weight:800;letter-spacing:6px;margin:0;">${code}</p>
       </div>
-      <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">This code expires in 15 minutes. If you did not request this, please ignore this email.</p>
+      <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">This code expires in 10 minutes. Do not share this code with anyone.</p>
     </div>
     <div style="background:#f8fafc;padding:16px 24px;text-align:center;border-top:1px solid #e2e8f0;">
       <p style="color:#94a3b8;font-size:11px;margin:0;">&copy; ${new Date().getFullYear()} AIOMS. All rights reserved.</p>
@@ -77,6 +105,7 @@ export async function sendVerificationEmail(
 </html>`,
     });
 
+    console.log("[sendVerificationEmail] Email sent successfully to", email);
     return { success: true };
   } catch (error) {
     console.error("[sendVerificationEmail] SMTP error:", error);
