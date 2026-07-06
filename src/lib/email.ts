@@ -5,17 +5,31 @@ export function getTransporter(): nodemailer.Transporter | null {
   const pass = process.env.EMAIL_PASS;
   if (!user || !pass) return null;
   return nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: { user, pass },
   });
 }
 
 function waitForSendMail(
   transporter: nodemailer.Transporter,
-  mailOptions: nodemailer.SendMailOptions
+  mailOptions: nodemailer.SendMailOptions,
+  timeoutMs = 15000
 ): Promise<nodemailer.SentMessageInfo> {
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error(`SMTP timeout after ${timeoutMs}ms`));
+      }
+    }, timeoutMs);
     transporter.sendMail(mailOptions, (err, info) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       if (err) reject(err);
       else resolve(info);
     });
