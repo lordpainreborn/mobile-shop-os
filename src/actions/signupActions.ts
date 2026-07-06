@@ -28,12 +28,17 @@ export async function sendSignupOTP(data: {
 
   const normalizedEmail = email.trim().toLowerCase();
 
+  console.log("[sendSignupOTP] Starting for:", normalizedEmail);
+  console.log("[sendSignupOTP] DATABASE_URL present:", !!process.env.DATABASE_URL);
+  console.log("[sendSignupOTP] EMAIL_USER present:", !!process.env.EMAIL_USER);
+
   try {
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
 
     if (existingUser) {
+      console.log("[sendSignupOTP] Email already registered");
       return { success: false, error: "An account with this email already exists" };
     }
 
@@ -52,8 +57,10 @@ export async function sendSignupOTP(data: {
         expiresAt,
       },
     });
+    console.log("[sendSignupOTP] Code stored, now sending email");
 
     const result = await sendVerificationEmail(normalizedEmail, code, "SIGNUP");
+    console.log("[sendSignupOTP] Email result:", JSON.stringify(result));
 
     return {
       success: true,
@@ -62,7 +69,8 @@ export async function sendSignupOTP(data: {
     };
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
-    console.error("AUTH API CRASH DETECTED [sendSignupOTP]:", {
+    console.error("[sendSignupOTP] CRASH:", {
+      name: err?.name,
       message: err?.message,
       stack: err?.stack,
       code: err?.code,
@@ -71,7 +79,7 @@ export async function sendSignupOTP(data: {
       if (err.code === "P1001") {
         return { success: false, error: "Database connection failed. Check DATABASE_URL." };
       }
-      return { success: false, error: `Database error: ${err.message}`, code: err.code };
+      return { success: false, error: `Database error [${err.code}]: ${err.message}` };
     }
     return { success: false, error: err?.message || "Server error. Please try again." };
   }
@@ -86,10 +94,16 @@ export async function resendSignupOTP(
     return { success: false, error: "Email is required" };
   }
 
+  console.log("[resendSignupOTP] Starting for:", normalizedEmail);
+  console.log("[resendSignupOTP] DATABASE_URL present:", !!process.env.DATABASE_URL);
+  console.log("[resendSignupOTP] EMAIL_USER present:", !!process.env.EMAIL_USER);
+  console.log("[resendSignupOTP] EMAIL_PASS present:", !!process.env.EMAIL_PASS);
+
   try {
     await prisma.verificationCode.deleteMany({
       where: { email: normalizedEmail, type: "SIGNUP" },
     });
+    console.log("[resendSignupOTP] Old codes deleted");
 
     const code = generateOTP();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -97,8 +111,10 @@ export async function resendSignupOTP(
     await prisma.verificationCode.create({
       data: { email: normalizedEmail, code, type: "SIGNUP", expiresAt },
     });
+    console.log("[resendSignupOTP] New code stored");
 
     const result = await sendVerificationEmail(normalizedEmail, code, "SIGNUP");
+    console.log("[resendSignupOTP] Email result:", JSON.stringify(result));
 
     return {
       success: true,
@@ -107,13 +123,14 @@ export async function resendSignupOTP(
     };
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
-    console.error("AUTH API CRASH DETECTED [resendSignupOTP]:", {
+    console.error("[resendSignupOTP] CRASH:", {
+      name: err?.name,
       message: err?.message,
       stack: err?.stack,
       code: err?.code,
     });
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      return { success: false, error: `Database error: ${err.message}` };
+      return { success: false, error: `Database error [${err.code}]: ${err.message}` };
     }
     return { success: false, error: err?.message || "Server error. Please try again." };
   }
@@ -134,6 +151,10 @@ export async function verifySignupOTP(data: {
 
   const normalizedEmail = email.trim().toLowerCase();
 
+  console.log("[verifySignupOTP] Starting for:", normalizedEmail);
+  console.log("[verifySignupOTP] Code entered:", code.trim());
+  console.log("[verifySignupOTP] DATABASE_URL present:", !!process.env.DATABASE_URL);
+
   try {
     const verificationCode = await prisma.verificationCode.findFirst({
       where: {
@@ -145,11 +166,14 @@ export async function verifySignupOTP(data: {
     });
 
     if (!verificationCode) {
+      console.log("[verifySignupOTP] Code not found or expired");
       return {
         success: false,
         error: "ထည့်သွင်းထားသော ကုဒ်မှားယွင်းနေပါသည်။ ပြန်လည်စစ်ဆေးပါ။ (Invalid or expired code)",
       };
     }
+
+    console.log("[verifySignupOTP] Code verified, creating account");
 
     const passwordHash = await bcrypt.hash(password, 12);
 
@@ -160,6 +184,7 @@ export async function verifySignupOTP(data: {
         phone: "",
       },
     });
+    console.log("[verifySignupOTP] Shop created:", shop.id);
 
     const user = await prisma.user.create({
       data: {
@@ -170,6 +195,7 @@ export async function verifySignupOTP(data: {
         shopId: shop.id,
       },
     });
+    console.log("[verifySignupOTP] User created:", user.id);
 
     await prisma.verificationCode.deleteMany({
       where: { email: normalizedEmail, type: "SIGNUP" },
@@ -183,10 +209,12 @@ export async function verifySignupOTP(data: {
       shopId: shop.id,
     });
 
+    console.log("[verifySignupOTP] Session created, success");
     return { success: true };
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
-    console.error("AUTH API CRASH DETECTED [verifySignupOTP]:", {
+    console.error("[verifySignupOTP] CRASH:", {
+      name: err?.name,
       message: err?.message,
       stack: err?.stack,
       code: err?.code,
@@ -195,7 +223,7 @@ export async function verifySignupOTP(data: {
       return { success: false, error: "Authentication failed. Please try signing up again." };
     }
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      return { success: false, error: `Database error: ${err.message}`, code: err.code };
+      return { success: false, error: `Database error [${err.code}]: ${err.message}` };
     }
     return { success: false, error: err?.message || "Server error. Please try again." };
   }
