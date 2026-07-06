@@ -81,16 +81,15 @@ export async function sendVerificationEmail(
       ? "Use the code below to verify your email and create your account."
       : "Use the code below to reset your password. This code will expire in 10 minutes.";
 
-  try {
-    const transporter = getTransporter();
+  const transporter = getTransporter();
 
-    await verifyConnection(transporter);
+  await verifyConnection(transporter);
 
-    await sendMail(transporter, {
-      from: `"AIOMS POS" <${user}>`,
-      to: email,
-      subject,
-      html: `<!DOCTYPE html>
+  await sendMail(transporter, {
+    from: `"AIOMS POS" <${user}>`,
+    to: email,
+    subject,
+    html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -117,16 +116,8 @@ export async function sendVerificationEmail(
   </div>
 </body>
 </html>`,
-    });
+  });
 
-    console.log("[sendVerificationEmail] Email sent successfully to", email);
-    return { success: true };
-  } catch (error) {
-    console.error("[sendVerificationEmail] SMTP error:", error);
-    console.log("=============================================");
-    console.log("FALLBACK OTP CODE (email delivery failed):", code);
-    console.log("Email:", email, "| Type:", type);
-    console.log("=============================================");
-    return { success: true, fallbackCode: code, devMode: true };
-  }
+  console.log("[sendVerificationEmail] Email delivered to", email);
+  return { success: true };
 }

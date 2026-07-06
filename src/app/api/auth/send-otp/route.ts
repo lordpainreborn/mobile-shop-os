@@ -64,29 +64,13 @@ export async function POST(request: Request) {
 
     console.log("SENDING OTP CODE:", code);
 
-    const result = await sendVerificationEmail(email, code, "SIGNUP");
+    await sendVerificationEmail(email, code, "SIGNUP");
 
-    return NextResponse.json({
-      success: true,
-      message: "OTP processed successfully.",
-      fallbackCode: result.fallbackCode,
-      devMode: result.devMode,
-    });
-  } catch (error: unknown) {
-    const err = error as Error & { code?: string };
-    console.error("AUTH API CRASH DETECTED [send-otp]:", {
-      message: err?.message,
-      stack: err?.stack,
-      code: err?.code,
-    });
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      return NextResponse.json(
-        { success: false, error: err.message, code: err.code },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("DEBUG-SMTP-ERROR:", error);
     return NextResponse.json(
-      { success: false, error: err?.message || "Internal Database/Auth Error", code: err?.code },
+      { success: false, error: error.message || "Unknown SMTP Error" },
       { status: 500 }
     );
   }
