@@ -30,7 +30,8 @@ export async function sendSignupOTP(data: {
 
   console.log("[sendSignupOTP] Starting for:", normalizedEmail);
   console.log("[sendSignupOTP] DATABASE_URL present:", !!process.env.DATABASE_URL);
-  console.log("[sendSignupOTP] BREVO_API_KEY present:", !!process.env.BREVO_API_KEY);
+  console.log("[sendSignupOTP] EMAIL_USER present:", !!process.env.EMAIL_USER);
+  console.log("[sendSignupOTP] EMAIL_PASS present:", !!process.env.EMAIL_PASS);
 
   try {
     const existingUser = await prisma.user.findUnique({
@@ -96,7 +97,8 @@ export async function resendSignupOTP(
 
   console.log("[resendSignupOTP] Starting for:", normalizedEmail);
   console.log("[resendSignupOTP] DATABASE_URL present:", !!process.env.DATABASE_URL);
-  console.log("[resendSignupOTP] BREVO_API_KEY present:", !!process.env.BREVO_API_KEY);
+  console.log("[resendSignupOTP] EMAIL_USER present:", !!process.env.EMAIL_USER);
+  console.log("[resendSignupOTP] EMAIL_PASS present:", !!process.env.EMAIL_PASS);
 
   try {
     await prisma.verificationCode.deleteMany({

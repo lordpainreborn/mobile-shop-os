@@ -1,20 +1,63 @@
-import { BrevoClient } from '@getbrevo/brevo';
+import nodemailer from 'nodemailer';
+
+function getTransporter(): nodemailer.Transporter {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+}
+
+function verifyConnection(transporter: nodemailer.Transporter): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transporter.verify((error) => {
+      if (error) {
+        console.error("SMTP Verify Error:", error);
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+function sendMail(
+  transporter: nodemailer.Transporter,
+  mailOptions: nodemailer.SendMailOptions
+): Promise<nodemailer.SentMessageInfo> {
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error("SMTP Send Error:", err);
+        reject(err);
+      } else {
+        console.log("EMAIL SENT SUCCESSFULLY:", info.messageId);
+        resolve(info);
+      }
+    });
+  });
+}
 
 export async function sendVerificationEmail(
   email: string,
   code: string,
   type: "SIGNUP" | "RESET"
 ): Promise<{ success: boolean; fallbackCode?: string; devMode?: boolean }> {
-  const apiKey = process.env.BREVO_API_KEY;
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
 
   console.log("SENDING OTP CODE:", code);
 
-  if (!apiKey) {
+  if (!user || !pass) {
     console.log("=============================================");
-    console.log("BREVO API KEY NOT CONFIGURED — DEV FALLBACK MODE");
+    console.log("GMAIL SMTP NOT CONFIGURED — DEV FALLBACK MODE");
     console.log("OTP CODE:", code);
     console.log("Email:", email, "| Type:", type);
-    console.log("Set BREVO_API_KEY in .env for live email");
+    console.log("Set EMAIL_USER & EMAIL_PASS in .env for live email");
     console.log("=============================================");
     return { success: true, fallbackCode: code, devMode: true };
   }
@@ -33,13 +76,15 @@ export async function sendVerificationEmail(
       : "Use the code below to reset your password. This code will expire in 10 minutes.";
 
   try {
-    const client = new BrevoClient({ apiKey });
+    const transporter = getTransporter();
 
-    const response = await client.transactionalEmails.sendTransacEmail({
-      sender: { name: "AIOMS POS", email: "aioms.app@gmail.com" },
-      to: [{ email }],
+    await verifyConnection(transporter);
+
+    await sendMail(transporter, {
+      from: `"AIOMS POS" <${user}>`,
+      to: email,
       subject,
-      htmlContent: `<!DOCTYPE html>
+      html: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -68,10 +113,10 @@ export async function sendVerificationEmail(
 </html>`,
     });
 
-    console.log("[sendVerificationEmail] Brevo email sent successfully to", email, response);
+    console.log("[sendVerificationEmail] Email sent successfully to", email);
     return { success: true };
   } catch (error) {
-    console.error("[sendVerificationEmail] Brevo API error:", error);
+    console.error("[sendVerificationEmail] SMTP error:", error);
     console.log("=============================================");
     console.log("FALLBACK OTP CODE (email delivery failed):", code);
     console.log("Email:", email, "| Type:", type);
