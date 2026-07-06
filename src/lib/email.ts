@@ -5,9 +5,7 @@ export function getTransporter(): nodemailer.Transporter | null {
   const pass = process.env.EMAIL_PASS;
   if (!user || !pass) return null;
   return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    service: "gmail",
     auth: { user, pass },
   });
 }
@@ -20,17 +18,6 @@ function waitForSendMail(
     transporter.sendMail(mailOptions, (err, info) => {
       if (err) reject(err);
       else resolve(info);
-    });
-  });
-}
-
-function waitForVerify(
-  transporter: nodemailer.Transporter
-): Promise<boolean> {
-  return new Promise((resolve, reject) => {
-    transporter.verify((error, success) => {
-      if (error) reject(error);
-      else resolve(success);
     });
   });
 }
@@ -69,9 +56,6 @@ export async function sendVerificationEmail(
       : "Use the code below to reset your password. This code will expire in 10 minutes.";
 
   try {
-    await waitForVerify(transporter);
-    console.log("[sendVerificationEmail] SMTP connection verified");
-
     await waitForSendMail(transporter, {
       from: `"AIOMS POS" <${sender}>`,
       to: email,
