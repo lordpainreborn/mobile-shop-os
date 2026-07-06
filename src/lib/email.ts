@@ -1,13 +1,13 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const FROM_EMAIL = "AIOMS <onboarding@resend.dev>";
-
-export function getResendClient(): Resend | null {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return null;
-  }
-  return new Resend(apiKey);
+export function getTransporter(): nodemailer.Transporter | null {
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
+  if (!user || !pass) return null;
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  });
 }
 
 export async function sendVerificationEmail(
@@ -15,25 +15,26 @@ export async function sendVerificationEmail(
   code: string,
   type: "SIGNUP" | "RESET"
 ): Promise<{ success: boolean; fallbackCode?: string; devMode?: boolean }> {
-  const resend = getResendClient();
+  const transporter = getTransporter();
+  const sender = process.env.EMAIL_USER;
 
-  if (!resend) {
+  if (!transporter || !sender) {
     console.log("=============================================");
-    console.log("RESEND_API_KEY NOT CONFIGURED — DEV FALLBACK MODE");
-    console.log("OTP CODE:", code);
+    console.log("GMAIL SMTP NOT CONFIGURED — DEV FALLBACK MODE");
+    console.log("SENDING OTP CODE:", code);
     console.log("Email:", email, "| Type:", type);
-    console.log("Set RESEND_API_KEY in .env / Vercel env vars for live email");
+    console.log("Set EMAIL_USER & EMAIL_PASS in .env for live email");
     console.log("=============================================");
     return { success: true, fallbackCode: code, devMode: true };
   }
 
   const subject =
     type === "SIGNUP"
-      ? "Verify your email - AIOMS"
-      : "Reset your password - AIOMS";
+      ? "Your AIOMS POS Verification Code"
+      : "Reset your password - AIOMS POS";
 
   const heading =
-    type === "SIGNUP" ? "Welcome to AIOMS!" : "Password Reset Request";
+    type === "SIGNUP" ? "Welcome to AIOMS POS!" : "Password Reset Request";
 
   const body =
     type === "SIGNUP"
@@ -41,8 +42,10 @@ export async function sendVerificationEmail(
       : "Use the code below to reset your password. This code will expire in 15 minutes.";
 
   try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
+    console.log("SENDING OTP CODE:", code);
+
+    await transporter.sendMail({
+      from: `"AIOMS POS" <${sender}>`,
       to: email,
       subject,
       html: `<!DOCTYPE html>
@@ -54,7 +57,7 @@ export async function sendVerificationEmail(
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:480px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:32px 24px;text-align:center;">
-      <h1 style="color:#ffffff;font-size:20px;margin:0;font-weight:700;">AIOMS</h1>
+      <h1 style="color:#ffffff;font-size:20px;margin:0;font-weight:700;">AIOMS POS</h1>
       <p style="color:#94a3b8;font-size:13px;margin:6px 0 0;">All In One Mobile Shop</p>
     </div>
     <div style="padding:32px 24px;">
@@ -76,7 +79,7 @@ export async function sendVerificationEmail(
 
     return { success: true };
   } catch (error) {
-    console.error("[sendVerificationEmail] Resend API error:", error);
+    console.error("[sendVerificationEmail] SMTP error:", error);
     console.log("=============================================");
     console.log("FALLBACK OTP CODE (email delivery failed):", code);
     console.log("Email:", email, "| Type:", type);

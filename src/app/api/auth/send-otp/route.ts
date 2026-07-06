@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { sendVerificationEmail, getResendClient } from "@/lib/email";
+import { sendVerificationEmail } from "@/lib/email";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rateLimit";
 
 function generateOTP(): string {
@@ -62,24 +62,15 @@ export async function POST(request: Request) {
       data: { email, code, type: "SIGNUP", expiresAt },
     });
 
-    console.log("DEV OTP:", code);
+    console.log("SENDING OTP CODE:", code);
 
-    const hasResend = getResendClient() !== null;
-    if (hasResend) {
-      await sendVerificationEmail(email, code, "SIGNUP");
-    } else {
-      console.log("=============================================");
-      console.log("RESEND NOT CONFIGURED — USING DEV FALLBACK");
-      console.log("OTP CODE:", code);
-      console.log("Email:", email, "| Type: SIGNUP");
-      console.log("=============================================");
-    }
+    const result = await sendVerificationEmail(email, code, "SIGNUP");
 
     return NextResponse.json({
       success: true,
       message: "OTP processed successfully.",
-      fallbackCode: hasResend ? undefined : code,
-      devMode: !hasResend,
+      fallbackCode: result.fallbackCode,
+      devMode: result.devMode,
     });
   } catch (error: unknown) {
     const err = error as Error & { code?: string };
