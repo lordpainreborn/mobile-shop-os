@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       .from("subscription_tokens")
       .select("id, duration_days, is_used")
       .eq("token_code", tokenCode)
+      .eq("user_id", profile.id)
       .single();
 
     if (tokenError || !token) {
