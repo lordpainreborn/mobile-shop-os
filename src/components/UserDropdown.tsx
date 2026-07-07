@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, User, Shield, LogOut, KeyRound, Monitor, Gem, Loader2 } from "lucide-react";
+import { getSupabase } from "@/lib/supabase";
 
 type UserData = {
   id: string;
@@ -38,8 +39,11 @@ export default function UserDropdown({ user }: UserDropdownProps) {
   const isDesktop = typeof navigator !== "undefined" &&
     (navigator.userAgent.toLowerCase().includes("electron") || navigator.userAgent.toLowerCase().includes("aioms-desktop"));
 
-  function handleLogout() {
+  async function handleLogout() {
     setLoggingOut(true);
+    try {
+      await getSupabase().auth.signOut();
+    } catch {}
     router.push("/");
     fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     setTimeout(() => router.refresh(), 100);

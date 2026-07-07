@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { getSubscriptionStatus, getAvailableTokens } from "@/actions/tokenActions";
 import { useRouter } from "next/navigation";
+import { getSupabase } from "@/lib/supabase";
 
 type UserData = {
   id: string;
@@ -107,6 +108,7 @@ export default function AccountPage() {
   }
 
   async function handleLogout() {
+    try { await getSupabase().auth.signOut(); } catch {}
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   }

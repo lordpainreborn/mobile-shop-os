@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Globe, Menu, LogOut, Loader2 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { getSupabase } from "@/lib/supabase";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -22,6 +23,7 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
+      await getSupabase().auth.signOut();
       await fetch("/api/auth/logout", { method: "POST" });
       router.push("/login");
       router.refresh();
