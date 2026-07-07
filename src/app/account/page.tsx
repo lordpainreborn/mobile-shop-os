@@ -1,26 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Logo from "@/components/Logo";
 import {
-  User,
-  Mail,
-  Building2,
-  Shield,
-  Download,
-  ExternalLink,
-  Clock,
-  Loader2,
-  Sparkles,
-  Pencil,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Camera,
-  LogOut,
+  User, Mail, Building2, Shield, Loader2, Sparkles,
+  CheckCircle2, AlertCircle, Server,
+  ExternalLink, LogOut, Ticket, ArrowRight, Download,
 } from "lucide-react";
+import { getSubscriptionStatus, getAvailableTokens } from "@/actions/tokenActions";
+import { useRouter } from "next/navigation";
 
 type UserData = {
   id: string;
@@ -28,106 +16,94 @@ type UserData = {
   email: string;
   role: string;
   shopId: string;
-  avatarUrl?: string;
-  shopName?: string;
+};
+
+type SubscriptionData = {
+  tokenExpiry: string;
+  remainingDays: number;
+  isActive: boolean;
 };
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
+    opacity: 1, y: 0,
     transition: { delay: i * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
   }),
 };
-
-const PRESET_AVATARS = [
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=b6e3f4",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Mia&backgroundColor=c0aede",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam&backgroundColor=d1d4f9",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe&backgroundColor=ffd5dc",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Max&backgroundColor=baffc9",
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=Luna&backgroundColor=ffdfbf",
-];
 
 export default function AccountPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editShopName, setEditShopName] = useState("");
-  const [editAvatar, setEditAvatar] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sub, setSub] = useState<SubscriptionData | null>(null);
+  const [tokens, setTokens] = useState<{ code: string; durationDays: number; isUsed: boolean }[]>([]);
+  const [tokenCode, setTokenCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemMsg, setRedeemMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [error, setError] = useState("");
 
-  function fetchUser() {
+  useEffect(() => {
     fetch("/api/auth/me")
-      .then((res) => {
-        if (!res.ok) throw new Error("Not authenticated");
-        return res.json();
-      })
-      .then((data) => {
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then(async (data) => {
         setUser(data.user);
-        setLoading(false);
+        const subResult = await getSubscriptionStatus(data.user.email);
+        if (subResult.success && subResult.tokenExpiry) {
+          const expiry = new Date(subResult.tokenExpiry);
+          const now = new Date();
+          const remainingMs = expiry.getTime() - now.getTime();
+          const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+          setSub({
+            tokenExpiry: subResult.tokenExpiry,
+            remainingDays: Math.max(0, remainingDays),
+            isActive: remainingDays > 0,
+          });
+        }
+        const tokResult = await getAvailableTokens(data.user.email);
+        if (tokResult.success && tokResult.tokens) {
+          setTokens(tokResult.tokens);
+        }
       })
-      .catch(() => {
-        setAuthError(true);
-        setLoading(false);
-      });
-  }
+      .catch(() => setError("Not authenticated"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  useEffect(() => { fetchUser(); }, []);
+  async function handleRedeem(e: React.FormEvent) {
+    e.preventDefault();
+    if (!tokenCode.trim() || !user) return;
+    setRedeeming(true);
+    setRedeemMsg(null);
 
-  function openEdit() {
-    if (!user) return;
-    setEditName(user.name);
-    setEditShopName(user.shopName ?? "");
-    setEditAvatar(user.avatarUrl ?? "");
-    setSaveMsg(null);
-    setEditing(true);
-  }
-
-  async function handleSave() {
-    setSaving(true);
-    setSaveMsg(null);
     try {
-      const res = await fetch("/api/auth/update-profile", {
+      const res = await fetch("/api/subscription/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, shopName: editShopName, avatarUrl: editAvatar }),
+        body: JSON.stringify({ token_code: tokenCode, email: user.email }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setSaveMsg({ type: "err", text: data.message || "Update failed." });
-        return;
+      if (data.success) {
+        setRedeemMsg({ type: "ok", text: data.message || "Token redeemed! Your subscription has been extended." });
+        setTokenCode("");
+        const subResult = await getSubscriptionStatus(user.email);
+        if (subResult.success && subResult.tokenExpiry) {
+          const expiry = new Date(subResult.tokenExpiry);
+          const now = new Date();
+          const remainingMs = expiry.getTime() - now.getTime();
+          const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+          setSub({
+            tokenExpiry: subResult.tokenExpiry,
+            remainingDays: Math.max(0, remainingDays),
+            isActive: remainingDays > 0,
+          });
+        }
+      } else {
+        setRedeemMsg({ type: "err", text: data.error || "Failed to redeem token" });
       }
-      if (data.user) setUser(data.user);
-      setSaveMsg({ type: "ok", text: data.message || "Profile updated." });
-      window.dispatchEvent(new Event("profile-updated"));
-      router.refresh();
-      setTimeout(() => setEditing(false), 1200);
-    } catch {
-      setSaveMsg({ type: "err", text: "Network error." });
-    } finally {
-      setSaving(false);
+    } catch (err: any) {
+      setRedeemMsg({ type: "err", text: err.message || "Network error" });
     }
-  }
-
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setSaveMsg({ type: "err", text: "File must be under 2MB." });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setEditAvatar(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    setRedeeming(false);
   }
 
   async function handleLogout() {
@@ -135,26 +111,9 @@ export default function AccountPage() {
     router.push("/login");
   }
 
-  async function handleBackup() {
-    try {
-      const res = await fetch("/api/backup", { method: "POST" });
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `aioms_backup_${new Date().toISOString().split("T")[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch {
-      // ignore
-    }
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </div>
     );
@@ -162,163 +121,111 @@ export default function AccountPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
-        {authError ? (
-          <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-            <p className="text-slate-600 font-medium mb-2">Session expired or not authenticated</p>
-            <a href="/login" className="text-blue-600 text-sm font-semibold hover:underline">Go to Login</a>
-          </div>
-        ) : (
-          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-        )}
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-slate-500">{error || "Redirecting..."}</p>
       </div>
     );
   }
 
-  const initials = user.name
-    ? user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
-    : user.email.charAt(0).toUpperCase();
-  const subDaysLeft = 14;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Account & License</h1>
-          <p className="text-sm text-slate-500 mt-1">Your account and subscription details</p>
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Account & Billing</h1>
+          <p className="text-sm text-slate-500 mt-1">Manage your subscription, redeem tokens, and download the EXE</p>
         </motion.div>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          <motion.div
-            custom={0}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
+          <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible"
             className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
           >
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <User className="w-4 h-4 text-blue-500" />
-                Account Profile
-              </div>
-              <button
-                onClick={openEdit}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition cursor-pointer"
-              >
-                <Pencil className="w-3 h-3" />
-                Edit Profile
-              </button>
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <User className="w-4 h-4 text-blue-500" />
+              Profile
             </div>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center gap-4">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="avatar" className="w-14 h-14 rounded-2xl object-cover shadow-lg" />
-                ) : (
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/20">
-                    {initials}
-                  </div>
-                )}
-                <div>
-                  <p className="text-lg font-bold text-slate-900">{user.name}</p>
-                  <p className="text-xs text-slate-500">{user.shopName || "Shop Owner"}</p>
-                </div>
+            <div className="p-6 space-y-3">
+              <div className="flex items-center gap-3 text-sm">
+                <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="text-slate-500 w-20 shrink-0">Shop ID</span>
+                <span className="font-medium text-slate-800 truncate">{user.shopId}</span>
               </div>
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3 text-sm">
-                  <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="text-slate-500 w-24 shrink-0">Shop ID</span>
-                  <span className="font-medium text-slate-800 truncate">{user.shopId}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <Mail className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="text-slate-500 w-24 shrink-0">Email</span>
-                  <span className="font-medium text-slate-800 truncate">{user.email}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <Shield className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span className="text-slate-500 w-24 shrink-0">Role</span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-                    {user.role}
-                  </span>
-                </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="text-slate-500 w-20 shrink-0">Email</span>
+                <span className="font-medium text-slate-800 truncate">{user.email}</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Shield className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="text-slate-500 w-20 shrink-0">Role</span>
+                <span className="inline-flex rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                  {user.role}
+                </span>
               </div>
             </div>
           </motion.div>
 
-          <motion.div
-            custom={1}
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
+          <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible"
             className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
           >
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                License & Subscription
-              </div>
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              Subscription Status
             </div>
-            <div className="p-6 space-y-5">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-700">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                  </span>
-                  ACTIVE LICENSE
-                </span>
-              </div>
+            <div className="p-6 space-y-4">
+              {sub ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                      sub.isActive
+                        ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
+                        : "bg-red-50 border border-red-200 text-red-700"
+                    }`}>
+                      <span className="relative flex h-2 w-2">
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                          sub.isActive ? "bg-emerald-400" : "bg-red-400"
+                        }`} />
+                        <span className={`relative inline-flex h-2 w-2 rounded-full ${
+                          sub.isActive ? "bg-emerald-500" : "bg-red-500"
+                        }`} />
+                      </span>
+                      {sub.isActive ? "ACTIVE" : "EXPIRED"}
+                    </span>
+                  </div>
 
-              <div className="text-center py-4">
-                <p className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  {subDaysLeft}
-                </p>
-                <p className="text-sm text-slate-500 mt-1 font-medium">Days Remaining</p>
-                <div className="flex items-center justify-center gap-1.5 mt-2">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs text-slate-400">Free Trial Period</span>
-                </div>
-              </div>
+                  <div className="text-center py-2">
+                    <p className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      {sub.remainingDays}
+                    </p>
+                    <p className="text-sm text-slate-500 mt-1 font-medium">Days Remaining</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Expires: {new Date(sub.tokenExpiry).toLocaleDateString()}
+                    </p>
+                  </div>
 
-              <div>
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
-                  <span>Trial Progress</span>
-                  <span>{30 - subDaysLeft}/30 days used</span>
-                </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all"
-                    style={{ width: `${((30 - subDaysLeft) / 30) * 100}%` }}
-                  />
-                </div>
-              </div>
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all"
+                      style={{ width: `${Math.min(100, Math.max(0, (sub.remainingDays / 365) * 100))}%` }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-4">Loading subscription data...</p>
+              )}
 
-              <div className="space-y-2.5 pt-1">
-                <button
-                  onClick={handleBackup}
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-500 transition shadow-sm cursor-pointer"
-                >
-                  Backup Data (JSON)
-                </button>
-                <a
-                  href="/download"
+              <div className="space-y-2 pt-1">
+                <a href="/download"
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-blue-600 text-sm font-semibold text-white hover:bg-blue-500 transition shadow-sm"
                 >
                   <Download className="w-4 h-4" />
-                  Download Windows App (.exe)
+                  Download AIOMS EXE
                 </a>
-                <a
-                  href="https://t.me/LordPainReborn"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <a href="https://t.me/LordPainReborn" target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-100 border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition"
                 >
-                  Renew License via Telegram
+                  Contact Support via Telegram
                   <ExternalLink className="w-3.5 h-3.5 opacity-50" />
                 </a>
-                <button
-                  onClick={handleLogout}
+                <button onClick={handleLogout}
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-red-50 border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-100 transition cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
@@ -328,141 +235,87 @@ export default function AccountPage() {
             </div>
           </motion.div>
         </div>
-      </div>
 
-      <AnimatePresence>
-        {editing && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setEditing(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                <h3 className="text-base font-bold text-slate-900">Edit Profile</h3>
-                <button onClick={() => setEditing(false)} className="p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
-                  <X className="w-4 h-4 text-slate-500" />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Profile Photo</label>
-                  <div className="flex items-center gap-4 mb-3">
-                    {editAvatar ? (
-                      <img src={editAvatar} alt="avatar" className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-200" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl font-bold">
-                        {initials}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="text-xs text-slate-500 mb-1.5">Choose a photo:</p>
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition cursor-pointer"
-                        >
-                          <Camera className="w-3.5 h-3.5" />
-                          Upload
-                        </button>
-                        {PRESET_AVATARS.slice(0, 3).map((url) => (
-                          <button
-                            key={url}
-                            onClick={() => setEditAvatar(url)}
-                            className={`w-9 h-9 rounded-lg overflow-hidden border-2 transition cursor-pointer ${
-                              editAvatar === url ? "border-blue-500 ring-2 ring-blue-200" : "border-slate-200 hover:border-slate-300"
-                            }`}
-                          >
-                            <img src={url} alt="avatar" className="w-full h-full" />
-                          </button>
-                        ))}
-                      </div>
+        <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible"
+          className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+        >
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <Ticket className="w-4 h-4 text-purple-500" />
+            Redeem Token
+          </div>
+          <div className="p-6">
+            <form onSubmit={handleRedeem} className="flex gap-3">
+              <input
+                type="text"
+                value={tokenCode}
+                onChange={(e) => setTokenCode(e.target.value.toUpperCase())}
+                placeholder="Enter token code (e.g. FREE-30D-XXXX)"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition font-mono tracking-wider"
+              />
+              <button
+                type="submit"
+                disabled={redeeming || !tokenCode.trim()}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-500 transition shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                Redeem
+              </button>
+            </form>
+            <AnimatePresence>
+              {redeemMsg && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className={`mt-3 flex items-center gap-2 text-sm rounded-xl px-4 py-3 ${
+                    redeemMsg.type === "ok"
+                      ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
+                      : "bg-red-50 border border-red-200 text-red-700"
+                  }`}
+                >
+                  {redeemMsg.type === "ok" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                  {redeemMsg.text}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {tokens.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs text-slate-500 font-medium mb-2">Your Tokens</p>
+                <div className="space-y-1.5">
+                  {tokens.map((t, i) => (
+                    <div key={i} className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs ${
+                      t.isUsed ? "bg-slate-50 text-slate-400" : "bg-blue-50 text-blue-700"
+                    }`}>
+                      <span className="font-mono font-bold">{t.code}</span>
+                      <span>{t.durationDays} days {t.isUsed ? "(used)" : "(available)"}</span>
                     </div>
-                  </div>
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-                  <div className="flex items-center gap-2">
-                    <Camera className="w-4 h-4 text-slate-400 shrink-0" />
-                    <input
-                      type="url"
-                      value={editAvatar}
-                      onChange={(e) => setEditAvatar(e.target.value)}
-                      placeholder="Or paste an image URL..."
-                      className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Your Name</label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Shop Name</label>
-                  <input
-                    type="text"
-                    value={editShopName}
-                    onChange={(e) => setEditShopName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition"
-                    placeholder="My Mobile Shop"
-                  />
-                </div>
-
-                <AnimatePresence>
-                  {saveMsg && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className={`flex items-center gap-2 text-sm rounded-xl px-4 py-3 ${
-                        saveMsg.type === "ok"
-                          ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
-                          : "bg-red-50 border border-red-200 text-red-700"
-                      }`}
-                    >
-                      {saveMsg.type === "ok" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                      {saveMsg.text}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex gap-3 pt-1">
-                  <button
-                    onClick={() => setEditing(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                    {saving ? "Saving..." : "Save Changes"}
-                  </button>
+                  ))}
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+          </div>
+        </motion.div>
+
+        <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible"
+          className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-8 text-white"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <Server className="w-6 h-6 text-blue-200" />
+            <h2 className="text-lg font-bold">AIOMS EXE — Full POS System</h2>
+          </div>
+          <p className="text-sm text-blue-100 mb-4 max-w-2xl">
+            To use the POS features, please download and login to our Desktop Application (.exe).
+            The Windows EXE handles all POS operations: sales, inventory, repairs, trade-in, warranty,
+            expenses, reports, and staff management. This web portal is for account management and subscription only.
+          </p>
+          <a href="/download"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-blue-700 text-sm font-bold hover:bg-blue-50 transition shadow-lg"
+          >
+            <Download className="w-4 h-4" />
+            Download EXE
+          </a>
+        </motion.div>
+      </div>
     </div>
   );
 }

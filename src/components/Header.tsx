@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Search, UserCircle, Globe, Menu, LogOut, Shield, Loader2 } from "lucide-react";
+import { Globe, Menu, LogOut, Loader2 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface HeaderProps {
@@ -35,25 +35,16 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
 
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-10 shadow-sm gap-4">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
           className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer shrink-0"
         >
           <Menu size={22} />
         </button>
-        <div className="hidden sm:flex items-center bg-slate-100 px-4 py-2 rounded-full flex-1 max-w-md focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-          <Search size={18} className="text-slate-400 mr-2 shrink-0" />
-          <input
-            type="text"
-            placeholder={
-              language === "en"
-                ? "Search products, tickets, or IMEI..."
-                : "ကုန်ပစ္စည်း၊ လက်ခံစာရင်း ရှာဖွေရန်..."
-            }
-            className="bg-transparent border-none outline-none text-sm w-full text-slate-700 placeholder-slate-400 min-w-0"
-          />
-        </div>
+        <a href="/" className="text-lg font-extrabold text-slate-800 tracking-tight">
+          AIOMS <span className="text-blue-500">Portal</span>
+        </a>
       </div>
 
       <div className="flex items-center gap-3 sm:gap-6 shrink-0">
@@ -63,13 +54,6 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
         >
           <Globe size={16} className="text-blue-600 shrink-0" />
           <span className="hidden sm:inline">{language === "en" ? "English" : "မြန်မာ"}</span>
-        </button>
-
-        <button className="relative text-slate-500 hover:text-blue-600 transition-colors cursor-pointer">
-          <Bell size={22} />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-            3
-          </span>
         </button>
 
         <div className="h-8 w-px bg-slate-200 hidden sm:block" />
@@ -100,13 +84,20 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
                 <div className="px-4 py-3 border-b border-slate-100">
                   <p className="text-sm font-semibold text-slate-900">{displayName}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{user?.email}</p>
-                  {user?.role && (
-                    <span className="inline-flex items-center gap-1 mt-1.5 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
-                      <Shield className="h-2.5 w-2.5" />
-                      {user.role}
-                    </span>
-                  )}
                 </div>
+                <a
+                  href="/account"
+                  className="block w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors font-medium"
+                >
+                  Account & Billing
+                </a>
+                <a
+                  href="/download"
+                  className="block w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors font-medium"
+                >
+                  Download EXE
+                </a>
+                <hr className="my-1 border-slate-100" />
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}

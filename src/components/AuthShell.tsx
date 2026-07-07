@@ -16,7 +16,7 @@ type UserData = {
   shopId: string;
 };
 
-const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password", "/terms-of-service", "/privacy-policy"];
+const PUBLIC_PATHS = ["/", "/download", "/login", "/signup", "/forgot-password", "/reset-password", "/terms-of-service", "/privacy-policy"];
 
 function isDesktopEnv() {
   if (typeof window === "undefined") return false;

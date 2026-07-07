@@ -16,9 +16,8 @@ type UserData = {
 
 const NAV_LINKS = [
   { label: "Download", href: "/download" },
-  { label: "Supported Features", href: "/#features" },
-  { label: "Active License / Pricing", href: "/#pricing" },
-  { label: "Reset Password", href: "/forgot-password" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "Account", href: "/account" },
 ];
 
 export default function Navbar() {
@@ -60,7 +59,7 @@ export default function Navbar() {
       <a href="/" className="flex items-center gap-2.5 shrink-0">
         <Logo className="h-9 w-9 rounded-lg" />
         <span className="text-lg font-extrabold tracking-tight text-white hidden sm:inline">
-          AIOMS <span className="text-blue-400">POS</span>
+          AIOMS <span className="text-blue-400">Portal</span>
         </span>
         <span className="ml-1 hidden sm:inline-flex items-center rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 leading-none">
           v2.0

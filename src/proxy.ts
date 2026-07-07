@@ -6,42 +6,47 @@ const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? "mobile-shop-os-dev-secret-change-in-production"
 );
 
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/auth/send-otp", "/api/auth/register", "/api/auth/verify-email", "/api/auth/forgot-password", "/api/auth/change-password", "/api/webhook/bot"];
-const LEGAL_PATHS = ["/terms-of-service", "/privacy-policy"];
+const PUBLIC_PATHS = [
+  "/login", "/signup", "/forgot-password", "/reset-password",
+  "/download", "/terms-of-service", "/privacy-policy",
+  "/api/auth", "/api/webhook",
+];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  if (
-    pathname === "/" ||
-    pathname === "/download" ||
-    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
-    LEGAL_PATHS.some((p) => pathname === p)
-  ) {
-    return NextResponse.next();
-  }
-
   const token = request.cookies.get(SESSION_COOKIE)?.value;
+  let isValid = false;
 
-  if (!token) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  try {
-    const { payload } = await jwtVerify(token, SECRET);
-
-    if (pathname.startsWith("/admin") && payload.role !== "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+  if (token) {
+    try {
+      await jwtVerify(token, SECRET);
+      isValid = true;
+    } catch {
+      isValid = false;
     }
-
-    return NextResponse.next();
-  } catch {
-    const response = NextResponse.redirect(new URL("/login", request.url));
-    response.cookies.delete(SESSION_COOKIE);
-    return response;
   }
+
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isApiCall = pathname.startsWith("/api/");
+  const isPublic =
+    pathname === "/" ||
+    PUBLIC_PATHS.some((p) => pathname.startsWith(p) || pathname === p);
+
+  if (isValid && isAuthPage) {
+    return NextResponse.redirect(new URL("/account", request.url));
+  }
+
+  if (isValid || isPublic) {
+    return NextResponse.next();
+  }
+
+  if (isApiCall) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const loginUrl = new URL("/login", request.url);
+  loginUrl.searchParams.set("redirect", pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {

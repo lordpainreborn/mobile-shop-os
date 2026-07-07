@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import {
   MessageCircle,
   X,
-  ChevronDown,
   ChevronRight,
   Send,
   Phone,
@@ -12,14 +11,14 @@ import {
   Headphones,
   ExternalLink,
   ArrowLeft,
-  Package,
-  Wrench,
-  ShoppingCart,
   Shield,
+  Download,
+  CreditCard,
+  HelpCircle,
 } from "lucide-react";
 
 type TabId = "faq" | "contact";
-type TutorialId = "products" | "repairs" | "pos" | "system" | null;
+type TutorialId = "account" | "subscription" | "download" | null;
 
 type TutorialCategory = {
   id: Exclude<TutorialId, null>;
@@ -31,55 +30,38 @@ type TutorialCategory = {
 
 const TUTORIALS: TutorialCategory[] = [
   {
-    id: "products",
-    titleMy: "📦 ပစ္စည်းစာရင်း ထည့်သွင်းနည်း",
-    titleEn: "Inventory Guide",
-    icon: <Package className="h-4 w-4" />,
-    steps: [
-      { my: "Sidebar မှ Products page ကို သွားပါ။", en: "Navigate to the Products page from the sidebar menu." },
-      { my: '"Add Product" ခလုတ်ကို နှိပ်ပါ။', en: 'Click the "Add Product" button at the top of the page.' },
-      { my: "ပစ္စည်းအမည်၊ အမျိုးအစား၊ အရင်းအနှီး၊ ရောင်းစျေးနှင့် အရေအတွက်ကို ဖြည့်ပါ။", en: "Fill in product name, category, cost, selling price, and stock quantity." },
-      { my: '"Save" ကို နှိပ်၍ inventory ထဲ ထည့်ပါ။', en: 'Click "Save" to add the product to your live inventory.' },
-      { my: "Edit နှင့် Delete ခလုတ်များဖြင့် စီမံပါ။", en: "Use Edit and Delete buttons on each product row to manage records." },
-    ],
-  },
-  {
-    id: "repairs",
-    titleMy: "🛠️ ပြုပြင်ရေး လက်ခံစာရင်း ဖွင့်နည်း",
-    titleEn: "Repair Tickets Guide",
-    icon: <Wrench className="h-4 w-4" />,
-    steps: [
-      { my: "Sidebar မှ Repairs page ကို သွားပါ။", en: "Navigate to the Repairs page from the sidebar." },
-      { my: '"New Ticket" ခလုတ်ကို နှိပ်ပါ။', en: 'Click "New Ticket" to create a repair entry.' },
-      { my: "ဖောက်သည့်အမည်၊ ဖုန်းနံပါတ်၊ Device Model၊ ပြဿနာဖော်ပြချက်နှင့် ခန့်မှန်းကုန်ကျငွေကို ထည့်ပါ။", en: "Enter customer name, phone, device model, issue description, and estimated cost." },
-      { my: '"Save" ကို နှိပ်၍ ticket ဖွင့်ပါ။', en: 'Click "Save" to create the repair ticket.' },
-      { my: "Status ကို update လုပ်ပါ။ PENDING → CHECKING → REPAIRING → READY → DELIVERED", en: "Update status: PENDING > CHECKING > REPAIRING > READY > DELIVERED." },
-      { my: "Technician ကို assign လုပ်၍ progress note ရေးပါ။", en: "Assign a Technician to the ticket and update progress notes." },
-    ],
-  },
-  {
-    id: "pos",
-    titleMy: "🛒 POS အရောင်းဘောက်ချာ ဖြတ်နည်း",
-    titleEn: "POS Checkout Guide",
-    icon: <ShoppingCart className="h-4 w-4" />,
-    steps: [
-      { my: "Sidebar မှ Sales (POS) page ကို သွားပါ။", en: "Navigate to the Sales (POS) page from the sidebar." },
-      { my: "Barcode စကင်ဖတ်ပါ သို့မဟုတ် ပစ္စည်းအမည်ဖြင့် ရှာပါ။", en: "Scan a barcode or search by product name to find items." },
-      { my: "ပစ္စည်းများကို cart ထဲ ထည့်၍ အရေအတွက် ညှိပါ။", en: "Add products to the cart and adjust quantities as needed." },
-      { my: "Payment Method ရွေးပါ။ Cash / KBZ Pay / Wave Money စသည်။", en: "Select a payment method (Cash, KBZ Pay, Wave Money, etc.)." },
-      { my: '"Checkout" ခလုတ်ကို နှိပ်၍ အရောင်းစာရင်း မှတ်ပါ။', en: 'Click "Checkout" to record the sale. Stock will update automatically.' },
-    ],
-  },
-  {
-    id: "system",
-    titleMy: "🔐 အကောင့်နှင့် လစဉ်ကြေး ဝန်ဆောင်မှု",
-    titleEn: "Account & Subscription",
+    id: "account",
+    titleMy: "🔐 အကောင့်ဖွင့်နည်းနှင့် အကောင့်ဝင်နည်း",
+    titleEn: "Account Registration & Login",
     icon: <Shield className="h-4 w-4" />,
     steps: [
-      { my: "Login Page တွင် Email နှင့် Password ထည့်၍ Log In ခလုတ်ကို နှိပ်ပါ။", en: "Enter your email and password on the Login page, then click Log In." },
-      { my: "Admin များသည် Staff page ရှိ User Management ဖြင့် ဝန်ထမ်းအကောင့်များကို စီမံနိုင်ပါသည်။", en: "Admins can manage staff accounts via User Management in the Staff page." },
-      { my: "Roles သုံးမျိုးရှိပါသည်။ ADMIN၊ TECHNICIAN၊ CASHIER။", en: "Three roles: ADMIN (full access), TECHNICIAN (repairs), CASHIER (POS)." },
-      { my: "Dashboard တွင် အရောင်းစုစုပေါင်း၊ repair status နှင့် ပစ္စည်းအကျဉ်းချုပ်ကို မြင်ရပါသည်။", en: "The Dashboard shows sales totals, repair status, and product overview." },
+      { my: "အကောင့်မရှိသေးပါက Sign Up page တွင် အီးမေးလ်ဖြင့် မှတ်ပုံတင်ပါ။", en: "If you don't have an account, register with your email on the Sign Up page." },
+      { my: "OTP ကုဒ်ကို သင့်အီးမေးလ်သို့ ပို့ပေးပါမည်။", en: "An OTP code will be sent to your email." },
+      { my: "OTP ကုဒ်ကိုထည့်၍ အကောင့်အတည်ပြုပါ။", en: "Enter the OTP code to verify your account." },
+      { my: "အကောင့်ဝင်ရန် Login page တွင် အီးမေးလ်နှင့် စကားဝှက်ထည့်ပါ။", en: "Go to the Login page and enter your email and password to sign in." },
+    ],
+  },
+  {
+    id: "subscription",
+    titleMy: "💳 လစဉ်ကြေးဝယ်ယူခြင်းနှင့် Token သုံးနည်း",
+    titleEn: "Subscription & Token Redemption",
+    icon: <CreditCard className="h-4 w-4" />,
+    steps: [
+      { my: "Token ကုဒ်များကို Telegram Bot မှတစ်ဆင့် ဝယ်ယူနိုင်ပါသည်။", en: "Purchase token codes via our Telegram bot." },
+      { my: "သင့် Account page တွင် 'Redeem Token' ကဏ္ဍသို့သွားပါ။", en: "Go to the 'Redeem Token' section on your Account page." },
+      { my: "Token ကုဒ်ကိုထည့်၍ Redeem ခလုတ်ကိုနှိပ်ပါ။", en: "Enter the token code and click Redeem." },
+      { my: "သင့် subscription သက်တမ်းသည် token ၏ duration_days အတိုင်း တိုးမြှင့်သွားပါမည်။", en: "Your subscription expiry will be extended by the token's duration." },
+    ],
+  },
+  {
+    id: "download",
+    titleMy: "⬇️ AIOMS EXE ဒေါင်းလုဒ်နှင့် အသုံးပြုနည်း",
+    titleEn: "Download & Use the EXE",
+    icon: <Download className="h-4 w-4" />,
+    steps: [
+      { my: "Download page မှ AIOMS EXE ကိုဒေါင်းလုဒ်လုပ်ပါ။", en: "Download the AIOMS EXE from the Download page." },
+      { my: "EXE ဖိုင်ကိုဖွင့်၍ သင်၏အကောင့်အီးမေးလ်နှင့် စကားဝှက်ဖြင့်ဝင်ပါ။", en: "Open the EXE and log in with your account email and password." },
+      { my: "သင်၏ subscription သက်တမ်းကို စစ်ဆေးနိုင်ပြီး POS လုပ်ဆောင်ချက်အားလုံးကို အသုံးပြုနိုင်ပါသည်။", en: "Your subscription status will sync, and you can access all POS features." },
     ],
   },
 ];
@@ -111,7 +93,6 @@ export default function FloatingSupportWidget() {
     <div ref={panelRef} className="fixed bottom-20 left-4 z-50 flex flex-col items-start gap-3 lg:bottom-4">
       {open && (
         <div className="w-80 sm:w-96 rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden text-slate-100">
-          {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400">
@@ -133,7 +114,6 @@ export default function FloatingSupportWidget() {
             </button>
           </div>
 
-          {/* Tabs */}
           <div className="flex border-b border-slate-800">
             <button
               type="button"
@@ -161,7 +141,6 @@ export default function FloatingSupportWidget() {
             </button>
           </div>
 
-          {/* Content */}
           <div className="max-h-[26rem] overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
             {tab === "faq" ? (
               expandedTutorial ? (
@@ -198,6 +177,9 @@ export default function FloatingSupportWidget() {
                 </div>
               ) : (
                 <div className="space-y-1.5">
+                  <p className="text-[11px] text-slate-500 font-medium px-1 mb-2">
+                    Portal Guides / လမ်းညွှန်ချက်များ
+                  </p>
                   {TUTORIALS.map((t) => (
                     <button
                       key={t.id}
@@ -215,6 +197,19 @@ export default function FloatingSupportWidget() {
                       <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-slate-300 shrink-0 transition" />
                     </button>
                   ))}
+                  <div className="mt-3 rounded-xl border border-slate-700 bg-slate-800/30 p-3">
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      POS features (Sales, Inventory, Repairs, Reports) are available only in the Desktop EXE application.
+                      This web portal is for account and billing management only.
+                    </p>
+                    <a
+                      href="/download"
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-500 transition"
+                    >
+                      <Download className="h-3 w-3" />
+                      Download EXE
+                    </a>
+                  </div>
                 </div>
               )
             ) : (
@@ -246,7 +241,6 @@ export default function FloatingSupportWidget() {
         </div>
       )}
 
-      {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

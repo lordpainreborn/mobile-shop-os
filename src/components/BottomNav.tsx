@@ -1,14 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ShoppingCart, Package, User } from "lucide-react";
+import { Settings, Download, CreditCard } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 const navItems = [
-  { nameEn: "Home", nameMy: "ပင်မ", href: "/dashboard", icon: Home },
-  { nameEn: "POS", nameMy: "အရောင်း", href: "/sales", icon: ShoppingCart },
-  { nameEn: "Stock", nameMy: "စတော့", href: "/products", icon: Package },
-  { nameEn: "Account", nameMy: "အကောင့်", href: "/account", icon: User },
+  { nameEn: "Account", nameMy: "အကောင့်", href: "/account", icon: Settings },
+  { nameEn: "Subscription", nameMy: "စာရင်းသွင်းမှု", href: "/account#subscription", icon: CreditCard },
+  { nameEn: "Download", nameMy: "ဒေါင်းလုဒ်", href: "/download", icon: Download },
 ];
 
 export default function BottomNav() {
@@ -24,7 +23,7 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 lg:hidden safe-area-bottom">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/dashboard");
+          const isActive = pathname === item.href;
           const Icon = item.icon;
           const label = language === "en" ? item.nameEn : item.nameMy;
           return (
