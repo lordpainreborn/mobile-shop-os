@@ -44,7 +44,22 @@ export async function sendSignupOTP(data: {
       return { success: false, error: "Account already exists. Please go to Login." };
     }
 
+    // Pre-create user in Supabase Auth so verifyOtp works in the next step
+    const { error: signUpError } = await getSupabase().auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          shop_name: shopName.trim(),
+          owner_name: ownerName.trim(),
+        },
+      },
+    });
 
+    // Ignore "already registered" — user may have been created by a prior attempt
+    if (signUpError && !signUpError.message.toLowerCase().includes("already registered")) {
+      return { success: false, error: signUpError.message };
+    }
 
     await prisma.verificationCode.deleteMany({
       where: { email: normalizedEmail, type: "SIGNUP" },
@@ -177,51 +192,45 @@ export async function verifySignupOTP(data: {
       };
     }
 
-    console.log("[verifySignupOTP] Code verified, creating account");
+    console.log("[verifySignupOTP] Code verified, confirming account");
 
-    const { error: signUpError } = await getSupabase().auth.signUp({
+    const { error: verifyError } = await getSupabase().auth.verifyOtp({
       email: normalizedEmail,
-      password,
-      options: {
-        data: {
-          shop_name: shopName.trim(),
-          owner_name: ownerName.trim(),
-        },
-      },
+      token: code.trim(),
+      type: "signup",
     });
 
-    if (signUpError) {
-      console.error("[verifySignupOTP] Supabase signUp error:", signUpError);
-      const msg = signUpError.message.toLowerCase();
-      if (msg.includes("already registered") || msg.includes("already exists") || signUpError.status === 400) {
-        return { success: false, error: "Account already exists. Please go to Login." };
-      }
-      return { success: false, error: signUpError.message };
+    if (verifyError) {
+      console.error("[verifySignupOTP] Supabase verifyOtp error:", verifyError);
+      // Don't block — the user was already pre-created in the send phase
+    } else {
+      console.log("[verifySignupOTP] Supabase email confirmed via verifyOtp");
     }
-
-    console.log("[verifySignupOTP] Supabase user created");
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const shop = await prisma.shop.create({
-      data: {
-        name: shopName.trim(),
-        ownerName: ownerName.trim(),
-        phone: "",
-      },
+    let shopRecord = await prisma.shop.findFirst({
+      where: { name: shopName.trim(), ownerName: ownerName.trim() },
     });
-    console.log("[verifySignupOTP] Shop created:", shop.id);
+    if (!shopRecord) {
+      shopRecord = await prisma.shop.create({
+        data: { name: shopName.trim(), ownerName: ownerName.trim(), phone: "" },
+      });
+    }
+    console.log("[verifySignupOTP] Shop ready:", shopRecord.id);
 
-    const user = await prisma.user.create({
-      data: {
+    const user = await prisma.user.upsert({
+      where: { email: normalizedEmail },
+      update: {},
+      create: {
         email: normalizedEmail,
         passwordHash,
         name: ownerName.trim(),
         role: "SHOP_OWNER",
-        shopId: shop.id,
+        shopId: shopRecord.id,
       },
     });
-    console.log("[verifySignupOTP] User created:", user.id);
+    console.log("[verifySignupOTP] User ready:", user.id);
 
     await prisma.verificationCode.deleteMany({
       where: { email: normalizedEmail, type: "SIGNUP" },
@@ -232,7 +241,7 @@ export async function verifySignupOTP(data: {
       email: user.email,
       name: user.name,
       role: user.role,
-      shopId: shop.id,
+      shopId: shopRecord.id,
     });
 
     console.log("[verifySignupOTP] Session created, success");

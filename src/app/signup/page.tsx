@@ -288,17 +288,32 @@ export default function SignupPage() {
 
             <AnimatePresence mode="wait">
               {step === "verify" && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-blue-50 border border-blue-100"
-                >
-                  <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />
-                  <p className="text-sm text-blue-700">
-                    {language === "en" ? "Code sent to" : "ကုဒ်ပို့ပြီး"} <span className="font-semibold">{email}</span>
-                  </p>
-                </motion.div>
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="flex items-center gap-3 mb-3 p-3 rounded-xl bg-blue-50 border border-blue-100"
+                  >
+                    <CheckCircle2 className="h-5 w-5 text-blue-500 shrink-0" />
+                    <p className="text-sm text-blue-700">
+                      {language === "en" ? "Code sent to" : "ကုဒ်ပို့ပြီး"} <span className="font-semibold">{email}</span>
+                    </p>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex items-start gap-2 mb-6 px-1"
+                  >
+                    <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {language === "en"
+                        ? "Didn't receive the code? Please check your spam or junk folder."
+                        : "ကုဒ်မရရှိပါက ကျေးဇူးပြု၍ သင့် Spam သို့မဟုတ် Junk ဖိုင်တွဲကို စစ်ဆေးပါ။"}
+                    </p>
+                  </motion.div>
+                </>
               )}
             </AnimatePresence>
 
