@@ -40,9 +40,11 @@ export async function sendSignupOTP(data: {
     });
 
     if (existingUser) {
-      console.log("[sendSignupOTP] Email already registered");
-      return { success: false, error: "An account with this email already exists" };
+      console.log("[sendSignupOTP] Email already registered in Prisma");
+      return { success: false, error: "Account already exists. Please go to Login." };
     }
+
+
 
     await prisma.verificationCode.deleteMany({
       where: { email: normalizedEmail, type: "SIGNUP" },
@@ -190,6 +192,10 @@ export async function verifySignupOTP(data: {
 
     if (signUpError) {
       console.error("[verifySignupOTP] Supabase signUp error:", signUpError);
+      const msg = signUpError.message.toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already exists") || signUpError.status === 400) {
+        return { success: false, error: "Account already exists. Please go to Login." };
+      }
       return { success: false, error: signUpError.message };
     }
 

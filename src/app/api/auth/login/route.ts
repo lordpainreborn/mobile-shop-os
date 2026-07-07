@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
     if (!user.emailVerified) {
       return NextResponse.json(
-        { success: false, error: "Please verify your email first", needsVerification: true },
+        { success: false, error: "Please verify your email first, or ask the admin to activate your account.", needsVerification: true },
         { status: 403 }
       );
     }
