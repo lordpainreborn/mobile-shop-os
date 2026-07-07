@@ -6,7 +6,7 @@ const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? "mobile-shop-os-dev-secret-change-in-production"
 );
 
-const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/auth/send-otp", "/api/auth/register", "/api/auth/verify-email", "/api/auth/forgot-password", "/api/auth/change-password"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password", "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/auth/send-otp", "/api/auth/register", "/api/auth/verify-email", "/api/auth/forgot-password", "/api/auth/change-password", "/api/webhook/bot"];
 const LEGAL_PATHS = ["/terms-of-service", "/privacy-policy"];
 
 export async function proxy(request: NextRequest) {

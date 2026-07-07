@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
 import { createSession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { getSupabase } from "@/lib/supabase";
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -175,6 +176,24 @@ export async function verifySignupOTP(data: {
     }
 
     console.log("[verifySignupOTP] Code verified, creating account");
+
+    const { error: signUpError } = await getSupabase().auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          shop_name: shopName.trim(),
+          owner_name: ownerName.trim(),
+        },
+      },
+    });
+
+    if (signUpError) {
+      console.error("[verifySignupOTP] Supabase signUp error:", signUpError);
+      return { success: false, error: signUpError.message };
+    }
+
+    console.log("[verifySignupOTP] Supabase user created");
 
     const passwordHash = await bcrypt.hash(password, 12);
 
