@@ -3,7 +3,7 @@ import { message } from "telegraf/filters";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
 const BOT_TOKEN = "8880051823:AAHOHIHxNwo0LU31UqTlIYM8s44QYNZ1AWk";
-const ADMIN_TELEGRAM_ID = 123456789; // <-- REPLACE with your actual Telegram user ID
+const ADMIN_TELEGRAM_ID = 8223021199;
 
 export const bot = new Telegraf(BOT_TOKEN);
 
