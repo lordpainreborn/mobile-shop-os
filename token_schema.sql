@@ -3,6 +3,10 @@
 -- Run this in Supabase SQL Editor
 -- ============================================
 
+-- 0. Add telegram_id to profiles (for bot linking)
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS telegram_id bigint UNIQUE;
+
 -- 1. Subscription tokens table
 CREATE TABLE IF NOT EXISTS public.subscription_tokens (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
