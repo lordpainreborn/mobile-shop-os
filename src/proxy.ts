@@ -9,7 +9,7 @@ const SECRET = new TextEncoder().encode(
 const PUBLIC_PATHS = [
   "/login", "/signup", "/forgot-password", "/reset-password",
   "/download", "/terms-of-service", "/privacy-policy",
-  "/api/auth", "/api/webhook", "/api/bot",
+  "/auth", "/api/auth", "/api/webhook", "/api/bot",
 ];
 
 export async function proxy(request: NextRequest) {
