@@ -2,15 +2,19 @@ import { Telegraf, Context } from "telegraf";
 import { Markup } from "telegraf";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
-const BOT_TOKEN = "8880051823:AAHOHIHxNwo0LU31UqTlIYM8s44QYNZ1AWk";
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "8880051823:AAHOHIHxNwo0LU31UqTlIYM8s44QYNZ1AWk";
 const ADMIN_TELEGRAM_ID = 8223021199;
 
 export const bot = new Telegraf(BOT_TOKEN);
 
-// In-memory pending state (ok for webhook — single process)
-const pendingAction = new Map<number, "link_email" | "admin_add_token" | "admin_broadcast">();
+type PendingAction = "link_email" | "admin_add_token" | "admin_broadcast_await_msg" | "admin_broadcast_confirm";
+const pendingAction = new Map<number, PendingAction>();
+const pendingBroadcastMsg = new Map<number, string>();
 
-// ── helpers ────────────────────────────────────────────────────────
+// ── sleep helper for rate limiting ──────────────────────────────────
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// ── Supabase helpers ───────────────────────────────────────────────
 
 async function getProfileByTelegramId(tid: number) {
   const supabase = getSupabaseAdmin();
@@ -18,7 +22,7 @@ async function getProfileByTelegramId(tid: number) {
     .from("profiles")
     .select("id, email, token_expiry, token_balance")
     .eq("telegram_id", tid)
-    .single();
+    .maybeSingle();
   return data;
 }
 
@@ -26,13 +30,15 @@ async function getProfileByEmail(email: string) {
   const supabase = getSupabaseAdmin();
   const { data } = await supabase
     .from("profiles")
-    .select("id, email, token_expiry, token_balance, telegram_id")
+    .select("id, email, token_expiry, token_balance, telegram_id, shop_name, created_at")
     .eq("email", email.toLowerCase())
-    .single();
+    .maybeSingle();
   return data;
 }
 
-function formatStatus(profile: { token_expiry: string; token_balance: number }) {
+// ── Status helpers ─────────────────────────────────────────────────
+
+function calcStatus(profile: { token_expiry: string; token_balance: number }) {
   const expiry = new Date(profile.token_expiry);
   const now = new Date();
   const remainingMs = expiry.getTime() - now.getTime();
@@ -46,10 +52,7 @@ function formatStatus(profile: { token_expiry: string; token_balance: number }) 
   };
 }
 
-function statusMessage(
-  status: ReturnType<typeof formatStatus>,
-  email: string,
-) {
+function statusMessage(status: ReturnType<typeof calcStatus>, email: string) {
   const emoji = status.isActive ? "✅" : "❌";
   return (
     `${emoji} *Subscription Status*\n\n` +
@@ -71,7 +74,7 @@ bot.start(async (ctx: Context) => {
   const isAdmin = ctx.from?.id === ADMIN_TELEGRAM_ID;
 
   if (isAdmin) {
-    ctx.reply(
+    return ctx.reply(
       "🛠️ *Admin Panel — Tech LP Bot*\n\n" +
       "Use the buttons below to manage subscriptions.",
       {
@@ -80,11 +83,11 @@ bot.start(async (ctx: Context) => {
           [Markup.button.callback("➕ Add Token", "admin_add_token")],
           [Markup.button.callback("👥 View All Users", "admin_view_users")],
           [Markup.button.callback("📢 Broadcast Notice", "admin_broadcast")],
+          [Markup.button.callback("📊 Platform Stats", "admin_stats")],
           [Markup.button.url("🌐 Web Portal", "https://mobile-shop-kirrh2dtu-lord-pain.vercel.app/account")],
         ]).reply_markup,
       },
     );
-    return;
   }
 
   // Regular user
@@ -123,13 +126,12 @@ bot.help((ctx: Context) => {
       "",
       "🔹 `/add_token <email> <days>` — Add subscription days",
       "🔹 `/broadcast <message>` — Send a notice to all users",
+      "🔹 `/stats` — View platform subscription statistics",
       "",
       "💡 *Tip:* Use the Admin Panel in /start for interactive tools.",
     );
   } else {
-    lines.push(
-      "💡 Tap *Check My Status* on /start to check your subscription.",
-    );
+    lines.push("💡 Tap *Check My Status* on /start to check your subscription.");
   }
 
   ctx.reply(lines.join("\n"), { parse_mode: "Markdown" });
@@ -142,7 +144,8 @@ bot.command("add_token", async (ctx: Context) => {
     return ctx.reply("⛔ Access Denied.");
   }
 
-  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+  if (!ctx.message || !("text" in ctx.message)) return;
+  const text = ctx.message.text;
   const parts = text.split(/\s+/);
   if (parts.length < 3) {
     return ctx.reply("Usage: /add_token <email> <days>\nExample: /add_token user@example.com 30");
@@ -156,13 +159,13 @@ bot.command("add_token", async (ctx: Context) => {
 
   try {
     const supabase = getSupabaseAdmin();
-    const { data: profile, error } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("id, token_expiry")
       .eq("email", email)
-      .single();
+      .maybeSingle();
 
-    if (error || !profile) {
+    if (!profile) {
       return ctx.reply("Email not found. Please register first on the web portal.");
     }
 
@@ -173,7 +176,8 @@ bot.command("add_token", async (ctx: Context) => {
     await supabase.from("profiles").update({ token_expiry: newExpiry.toISOString() }).eq("id", profile.id);
 
     ctx.reply(
-      `✅ Token added!\nUser: ${email}\nDays: ${days}\nNew expiry: ${newExpiry.toISOString().split("T")[0]}`,
+      `✅ Token added!\nUser: \`${email}\`\nDays: ${days}\nNew expiry: ${newExpiry.toISOString().split("T")[0]}`,
+      { parse_mode: "Markdown" },
     );
   } catch (err: any) {
     console.error("[add_token]", err);
@@ -188,41 +192,60 @@ bot.command("broadcast", async (ctx: Context) => {
     return ctx.reply("⛔ Access Denied.");
   }
 
-  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
-  const msg = text.slice("/broadcast".length).trim();
-  if (!msg) {
+  if (!ctx.message || !("text" in ctx.message)) return;
+  const text2 = ctx.message.text;
+  const msg2 = text2.slice("/broadcast".length).trim();
+  if (!msg2) {
     return ctx.reply("Usage: /broadcast <message>\nExample: /broadcast Server maintenance tonight at 2AM.");
   }
 
-  await ctx.reply("📤 Broadcasting... This may take a moment.");
+  // Confirmation step
+  pendingBroadcastMsg.set(ADMIN_TELEGRAM_ID, msg2);
+  pendingAction.set(ADMIN_TELEGRAM_ID, "admin_broadcast_confirm");
+
+  ctx.reply(
+    `⚠️ *Confirm Broadcast*\n\nYou are about to send this message to *all linked users*:\n\n${msg2}\n\n` +
+    `Reply with \`yes\` to confirm, or \`no\` /cancel to abort.`,
+    { parse_mode: "Markdown" },
+  );
+});
+
+// ── /stats (admin only) ────────────────────────────────────────────
+
+bot.command("stats", async (ctx: Context) => {
+  if (ctx.from?.id !== ADMIN_TELEGRAM_ID) {
+    return ctx.reply("⛔ Access Denied.");
+  }
 
   try {
     const supabase = getSupabaseAdmin();
-    const { data: recipients } = await supabase
-      .from("profiles")
-      .select("telegram_id")
-      .not("telegram_id", "is", null);
+    const { data: all } = await supabase.from("profiles").select("token_expiry, telegram_id");
 
-    if (!recipients || recipients.length === 0) {
-      return ctx.reply("No users have linked their Telegram yet.");
+    if (!all || all.length === 0) {
+      return ctx.reply("No users found.");
     }
 
-    let sent = 0;
-    let failed = 0;
-    for (const r of recipients) {
-      try {
-        await ctx.telegram.sendMessage(r.telegram_id, `📢 *Admin Notice*\n\n${msg}`, {
-          parse_mode: "Markdown",
-        });
-        sent++;
-      } catch {
-        failed++;
-      }
+    const now = new Date();
+    let active = 0;
+    let expired = 0;
+    let linked = 0;
+    for (const p of all) {
+      if (new Date(p.token_expiry) > now) active++;
+      else expired++;
+      if (p.telegram_id) linked++;
     }
 
-    ctx.reply(`✅ Broadcast complete.\nSent: ${sent}\nFailed: ${failed}`);
+    ctx.reply(
+      "📊 *Platform Statistics*\n\n" +
+      `Total users: \`${all.length}\`\n` +
+      `Active subscriptions: \`${active}\`\n` +
+      `Expired subscriptions: \`${expired}\`\n` +
+      `Telegram linked: \`${linked}\`\n` +
+      `Telegram unlinked: \`${all.length - linked}\``,
+      { parse_mode: "Markdown" },
+    );
   } catch (err: any) {
-    console.error("[broadcast]", err);
+    console.error("[stats]", err);
     ctx.reply(`❌ Error: ${err.message || "Internal error"}`);
   }
 });
@@ -255,24 +278,24 @@ bot.action("admin_view_users", async (ctx: Context) => {
       .from("profiles")
       .select("email, shop_name, token_expiry, token_balance, telegram_id")
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(20);
 
     if (!profiles || profiles.length === 0) {
       return ctx.reply("No users found.");
     }
 
-    const lines = profiles.map((p: { email: string; shop_name: string | null; token_expiry: string; token_balance: number; telegram_id: number | null }, i: number) => {
-      const status = formatStatus({ token_expiry: p.token_expiry, token_balance: p.token_balance });
-      const linked = p.telegram_id ? "✅ Linked" : "❌ Unlinked";
-      return (
-        `${i + 1}. \`${p.email}\`\n` +
-        `   Shop: ${p.shop_name || "-"} | Exp: ${status.expiryDate} | Days: ${status.remainingDays} | ${linked}`
-      );
-    });
+    const lines = profiles.map(
+      (p: { email: string; shop_name: string | null; token_expiry: string; token_balance: number; telegram_id: number | null }, i: number) => {
+        const status = calcStatus({ token_expiry: p.token_expiry, token_balance: p.token_balance });
+        const linked = p.telegram_id ? "✅L" : "❌U";
+        return (
+          `${i + 1}. \`${p.email}\`\n` +
+          `   Shop: ${p.shop_name || "-"} | Exp: ${status.expiryDate} | ${status.remainingDays}d | ${linked}`
+        );
+      },
+    );
 
-    ctx.reply(`👥 *Top ${profiles.length} Users*\n\n${lines.join("\n")}`, {
-      parse_mode: "Markdown",
-    });
+    ctx.reply(`👥 *Users (latest 20)*\n\n${lines.join("\n")}`, { parse_mode: "Markdown" });
   } catch (err: any) {
     console.error("[admin_view_users]", err);
     ctx.reply(`❌ Error: ${err.message}`);
@@ -285,12 +308,53 @@ bot.action("admin_broadcast", (ctx: Context) => {
   if (ctx.from?.id !== ADMIN_TELEGRAM_ID) {
     return ctx.answerCbQuery("⛔ Access Denied.");
   }
-  pendingAction.set(ctx.from.id, "admin_broadcast");
+  pendingAction.set(ctx.from.id, "admin_broadcast_await_msg");
   ctx.reply(
     "📢 Send the message you want to broadcast to all users.\n\n_Send /cancel to abort._",
     { parse_mode: "Markdown" },
   );
   ctx.answerCbQuery();
+});
+
+// ── Callback: Admin — Platform Stats ───────────────────────────────
+
+bot.action("admin_stats", async (ctx: Context) => {
+  if (ctx.from?.id !== ADMIN_TELEGRAM_ID) {
+    return ctx.answerCbQuery("⛔ Access Denied.");
+  }
+  ctx.answerCbQuery();
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: all } = await supabase.from("profiles").select("token_expiry, telegram_id");
+
+    if (!all || all.length === 0) {
+      return ctx.reply("No users found.");
+    }
+
+    const now = new Date();
+    let active = 0;
+    let expired = 0;
+    let linked = 0;
+    for (const p of all) {
+      if (new Date(p.token_expiry) > now) active++;
+      else expired++;
+      if (p.telegram_id) linked++;
+    }
+
+    ctx.reply(
+      "📊 *Platform Statistics*\n\n" +
+      `Total users: \`${all.length}\`\n` +
+      `Active subscriptions: \`${active}\`\n` +
+      `Expired subscriptions: \`${expired}\`\n` +
+      `Telegram linked: \`${linked}\`\n` +
+      `Telegram unlinked: \`${all.length - linked}\``,
+      { parse_mode: "Markdown" },
+    );
+  } catch (err: any) {
+    console.error("[admin_stats]", err);
+    ctx.reply(`❌ Error: ${err.message}`);
+  }
 });
 
 // ── Callback: User — Check My Status ───────────────────────────────
@@ -300,14 +364,12 @@ bot.action("check_status", async (ctx: Context) => {
   if (!chatId) return;
   ctx.answerCbQuery();
 
-  // Check if already linked
   const profile = await getProfileByTelegramId(chatId);
   if (profile) {
-    const status = formatStatus(profile);
+    const status = calcStatus(profile);
     return ctx.reply(statusMessage(status, profile.email!), { parse_mode: "Markdown" });
   }
 
-  // Not linked — ask for email
   pendingAction.set(chatId, "link_email");
   ctx.reply(
     "📧 Please send your registered email address to link your account.\n\n_Send /cancel to abort._",
@@ -315,7 +377,47 @@ bot.action("check_status", async (ctx: Context) => {
   );
 });
 
-// ── Text handler (all non-command text) ────────────────────────────
+// ── Core broadcast function (with rate limiting) ───────────────────
+
+async function executeBroadcast(ctx: Context, msg: string) {
+  await ctx.reply("📤 Broadcasting... This may take a moment.");
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: recipients } = await supabase
+      .from("profiles")
+      .select("telegram_id")
+      .not("telegram_id", "is", null);
+
+    if (!recipients || recipients.length === 0) {
+      return ctx.reply("No users have linked their Telegram yet.");
+    }
+
+    let sent = 0;
+    let failed = 0;
+    for (const r of recipients) {
+      // Skip self
+      if (r.telegram_id === ADMIN_TELEGRAM_ID) continue;
+      try {
+        await ctx.telegram.sendMessage(r.telegram_id, `📢 *Admin Notice*\n\n${msg}`, {
+          parse_mode: "Markdown",
+        });
+        sent++;
+      } catch {
+        failed++;
+      }
+      // Rate-limit: max 20 msg/sec
+      if (sent % 20 === 0) await sleep(1000);
+    }
+
+    ctx.reply(`✅ Broadcast complete.\nSent: ${sent}\nFailed: ${failed}`);
+  } catch (err: any) {
+    console.error("[broadcast]", err);
+    ctx.reply(`❌ Error: ${err.message || "Internal error"}`);
+  }
+}
+
+// ── Text handler ───────────────────────────────────────────────────
 
 bot.on("text", async (ctx: Context) => {
   const chatId = ctx.from?.id;
@@ -327,15 +429,15 @@ bot.on("text", async (ctx: Context) => {
   if (!action) return;
 
   // Cancel
-  if (text.toLowerCase() === "/cancel") {
+  if (text.toLowerCase() === "/cancel" || text.toLowerCase() === "no") {
     pendingAction.delete(chatId);
+    pendingBroadcastMsg.delete(chatId);
     return ctx.reply("Cancelled. Use /start to begin again.");
   }
 
   pendingAction.delete(chatId);
 
   if (action === "link_email") {
-    // ── User linking email ──
     if (!emailValid(text)) {
       pendingAction.set(chatId, "link_email");
       return ctx.reply("❌ Invalid email format. Try again, or send /cancel.");
@@ -345,20 +447,24 @@ bot.on("text", async (ctx: Context) => {
     const profile = await getProfileByEmail(email);
     if (!profile) {
       pendingAction.set(chatId, "link_email");
-      return ctx.reply("Email not found. Please register first on the web portal. Send /cancel to stop.");
+      return ctx.reply(
+        "Email not found. Please register first on the web portal (https://mobile-shop-kirrh2dtu-lord-pain.vercel.app/signup).\n\nSend /cancel to stop.",
+      );
     }
 
-    // Link telegram_id
+    // Link telegram_id (if not already linked to a different account)
+    if (profile.telegram_id && profile.telegram_id !== chatId) {
+      return ctx.reply(
+        "❌ This email is already linked to another Telegram account. Contact support if this is a mistake.",
+      );
+    }
+
     const supabase = getSupabaseAdmin();
     await supabase.from("profiles").update({ telegram_id: chatId }).eq("id", profile.id);
 
-    const status = formatStatus(profile);
-    ctx.reply(
-      `✅ *Account Linked!*\n\n${statusMessage(status, email)}`,
-      { parse_mode: "Markdown" },
-    );
+    const status = calcStatus(profile);
+    ctx.reply(`✅ *Account Linked!*\n\n${statusMessage(status, email)}`, { parse_mode: "Markdown" });
   } else if (action === "admin_add_token" && chatId === ADMIN_TELEGRAM_ID) {
-    // ── Admin adding token via inline ──
     const parts = text.split(/\s+/);
     if (parts.length < 2) {
       pendingAction.set(chatId, "admin_add_token");
@@ -378,7 +484,7 @@ bot.on("text", async (ctx: Context) => {
         .from("profiles")
         .select("id, token_expiry")
         .eq("email", email)
-        .single();
+        .maybeSingle();
 
       if (!profile) {
         pendingAction.set(chatId, "admin_add_token");
@@ -390,44 +496,33 @@ bot.on("text", async (ctx: Context) => {
       newExpiry.setDate(newExpiry.getDate() + days);
       await supabase.from("profiles").update({ token_expiry: newExpiry.toISOString() }).eq("id", profile.id);
 
-      ctx.reply(`✅ Token added!\nUser: ${email}\nDays: ${days}\nNew expiry: ${newExpiry.toISOString().split("T")[0]}`);
+      ctx.reply(
+        `✅ Token added!\nUser: \`${email}\`\nDays: ${days}\nNew expiry: ${newExpiry.toISOString().split("T")[0]}`,
+        { parse_mode: "Markdown" },
+      );
     } catch (err: any) {
       console.error("[admin_add_token]", err);
       ctx.reply(`❌ Error: ${err.message}`);
     }
-  } else if (action === "admin_broadcast" && chatId === ADMIN_TELEGRAM_ID) {
-    // ── Admin broadcasting ──
-    const msg = text;
-    await ctx.reply("📤 Broadcasting...");
+  } else if (action === "admin_broadcast_await_msg" && chatId === ADMIN_TELEGRAM_ID) {
+    // Store message and ask for confirmation
+    pendingBroadcastMsg.set(chatId, text);
+    pendingAction.set(chatId, "admin_broadcast_confirm");
 
-    try {
-      const supabase = getSupabaseAdmin();
-      const { data: recipients } = await supabase
-        .from("profiles")
-        .select("telegram_id")
-        .not("telegram_id", "is", null);
-
-      if (!recipients || recipients.length === 0) {
-        return ctx.reply("No users have linked their Telegram yet.");
-      }
-
-      let sent = 0;
-      let failed = 0;
-      for (const r of recipients) {
-        try {
-          await ctx.telegram.sendMessage(r.telegram_id, `📢 *Admin Notice*\n\n${msg}`, {
-            parse_mode: "Markdown",
-          });
-          sent++;
-        } catch {
-          failed++;
-        }
-      }
-
-      ctx.reply(`✅ Broadcast complete.\nSent: ${sent}\nFailed: ${failed}`);
-    } catch (err: any) {
-      console.error("[admin_broadcast]", err);
-      ctx.reply(`❌ Error: ${err.message || "Internal error"}`);
+    ctx.reply(
+      `⚠️ *Confirm Broadcast*\n\nYou are about to send this message to *all linked users*:\n\n${text}\n\n` +
+      `Reply with \`yes\` to confirm, or \`no\` /cancel to abort.`,
+      { parse_mode: "Markdown" },
+    );
+  } else if (action === "admin_broadcast_confirm" && chatId === ADMIN_TELEGRAM_ID) {
+    const lower = text.toLowerCase();
+    if (lower === "yes" || lower === "y") {
+      const msg = pendingBroadcastMsg.get(chatId) ?? "";
+      pendingBroadcastMsg.delete(chatId);
+      await executeBroadcast(ctx, msg);
+    } else {
+      pendingBroadcastMsg.delete(chatId);
+      ctx.reply("Broadcast cancelled.");
     }
   }
 });

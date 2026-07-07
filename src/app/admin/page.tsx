@@ -10,7 +10,7 @@ import {
   ExternalLink,
   Calendar,
   Mail,
-  Clock,
+  Smartphone,
   Sparkles,
   Shield,
 } from "lucide-react";
@@ -38,6 +38,7 @@ type Profile = {
   token_balance: number;
   token_expiry: string;
   created_at: string;
+  telegram_id: number | null;
   remainingDays: number;
   isActive: boolean;
 };
@@ -229,10 +230,11 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard title="Total Shops" value={stats.totalShops} icon={<Building2 className="h-6 w-6 text-blue-600" />} color="bg-blue-100" />
         <StatCard title="Total Users" value={stats.totalUsers} icon={<Users className="h-6 w-6 text-emerald-600" />} color="bg-emerald-100" />
         <StatCard title="Total Products" value={stats.totalProducts} icon={<Package className="h-6 w-6 text-purple-600" />} color="bg-purple-100" />
+        <StatCard title="Telegram Linked" value={profiles.filter((p) => p.telegram_id).length} icon={<Smartphone className="h-6 w-6 text-amber-600" />} color="bg-amber-100" />
       </div>
 
       <div className="flex gap-2 border-b border-slate-200">
@@ -268,7 +270,8 @@ export default function AdminPage() {
                   <th className="text-left px-6 py-3 font-semibold text-slate-600">Shop</th>
                   <th className="text-left px-6 py-3 font-semibold text-slate-600">Expiry</th>
                   <th className="text-center px-6 py-3 font-semibold text-slate-600">Status</th>
-                  <th className="text-center px-6 py-3 font-semibold text-slate-600">Days Left</th>
+                  <th className="text-center px-6 py-3 font-semibold text-slate-600">Days</th>
+                  <th className="text-center px-6 py-3 font-semibold text-slate-600">Telegram</th>
                   <th className="text-center px-6 py-3 font-semibold text-slate-600">Actions</th>
                 </tr>
               </thead>
@@ -304,6 +307,16 @@ export default function AdminPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        p.telegram_id
+                          ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
+                          : "bg-slate-100 border border-slate-200 text-slate-400"
+                      }`}>
+                        <Smartphone className="w-2.5 h-2.5" />
+                        {p.telegram_id ? "Linked" : "No"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleAddDays(p.email, 30)}
@@ -336,7 +349,7 @@ export default function AdminPage() {
                 ))}
                 {profiles.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                       No users found.
                     </td>
                   </tr>

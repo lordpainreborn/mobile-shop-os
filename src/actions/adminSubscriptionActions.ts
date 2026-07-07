@@ -14,7 +14,7 @@ export async function getAllProfiles() {
     const supabase = getSupabaseAdmin();
     const { data: profiles, error } = await supabase
       .from("profiles")
-      .select("id, email, shop_name, token_balance, token_expiry, created_at")
+      .select("id, email, shop_name, token_balance, token_expiry, created_at, telegram_id")
       .order("created_at", { ascending: false });
 
     if (error) {
